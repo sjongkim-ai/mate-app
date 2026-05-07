@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<meta name="theme-color" content="#0b0d18" />
+<title>TripMate · 채팅</title>
+<style>
+  :root {
+    --bg:#0b0d18; --dp:#111422; --c1:#171b2e; --c2:#1c2035;
+    --b1:rgba(255,255,255,.07); --b2:rgba(255,255,255,.13);
+    --gd:#c9a84c; --gl:#e8cc80;
+    --cr:#f0ead6; --mu:rgba(240,234,214,.56); --sf:rgba(240,234,214,.28);
+    --tl:#2ec4a0; --ro:#e8637a; --pp:#9b8afa; --am:#f0a855;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", system-ui, sans-serif; background: var(--bg); color: var(--cr); display:flex; justify-content:center; }
+  #app { width:100%; max-width:480px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:.5px solid var(--b1); background: var(--dp); position: sticky; top: 0; z-index: 5; }
+  .topbar .title { font-size:14px; font-weight:600; }
+  .topbar a { color: var(--mu); text-decoration:none; font-size:13px; }
+  .muted { color: var(--mu); font-size: 12px; }
+  .empty { text-align:center; color: var(--sf); padding: 30px 20px; font-size: 12px; }
+
+  /* List view */
+  #listView { flex: 1; overflow-y:auto; padding: 4px 0 max(20px,env(safe-area-inset-bottom)); }
+  .room { display:flex; gap:12px; padding: 12px 16px; cursor:pointer; border-bottom: .5px solid var(--b1); }
+  .room:hover { background: var(--c1); }
+  .room .av { width:46px; height:46px; border-radius:50%; background: linear-gradient(135deg,var(--c2),var(--c1)); border:1.5px solid var(--gd); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; color: var(--gd); overflow:hidden; }
+  .room .av img { width:100%; height:100%; object-fit:cover; }
+  .room .info { flex:1; min-width:0; }
+  .room .row1 { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .room .name { font-size:14px; font-weight:500; color:var(--cr); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .room .time { font-size:10px; color: var(--sf); flex-shrink:0; }
+  .room .last { font-size:12px; color: var(--mu); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .room .badge-demo { display:inline-block; background: rgba(155,138,250,.14); color: var(--pp); border:.5px solid var(--pp); padding: 0 6px; border-radius: 999px; font-size:9px; margin-left:4px; }
+  .room .unread { display:inline-block; background: var(--ro); color:#fff; padding: 0 6px; height:16px; line-height:16px; border-radius: 999px; font-size: 10px; margin-left:4px; min-width: 16px; text-align:center; }
+
+  /* Room view */
+  #roomView { flex: 1; display: flex; flex-direction: column; min-height:0; }
+  .room-header { display:flex; align-items:center; gap:12px; padding: 10px 14px; border-bottom: .5px solid var(--b1); background: var(--dp); position: sticky; top: 0; z-index:5;}
+  .room-header .av { width:36px; height:36px; border-radius:50%; background: var(--c2); border:1.5px solid var(--gd); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--gd); overflow:hidden; flex-shrink:0; }
+  .room-header .av img { width:100%; height:100%; object-fit:cover; }
+  .room-header .meta { flex:1; min-width:0; }
+  .room-header .name { font-size:14px; font-weight:500; color:var(--cr); }
+  .room-header .sub { font-size:10px; color: var(--mu); margin-top:1px; }
+
+  .messages { flex:1; overflow-y:auto; padding: 12px 12px 8px; display:flex; flex-direction:column; gap:6px; }
+  .msg { max-width: 82%; padding: 8px 11px; border-radius: 14px; font-size: 13px; line-height: 1.45; word-wrap: break-word; word-break: break-word; white-space: pre-wrap; }
+  .msg.mine { align-self: flex-end; background: linear-gradient(135deg,var(--gd),var(--gl)); color:#0b0d18; border-bottom-right-radius: 4px; }
+  .msg.theirs { align-self: flex-start; background: var(--c1); color: var(--cr); border:.5px solid var(--b1); border-bottom-left-radius: 4px; }
+  .msg.system { align-self:center; font-size:10px; color: var(--sf); padding: 4px 10px; background: var(--c2); border-radius: 999px; }
+  .msg-time { font-size: 9px; color: var(--sf); margin: -2px 6px 4px; }
+  .msg-time.mine { align-self: flex-end; }
+  .msg-time.theirs { align-self: flex-start; }
+  .date-divider { align-self:center; font-size:10px; color: var(--sf); padding: 6px 12px; margin: 8px 0; background: var(--c2); border-radius: 999px; }
+
+  .composer { padding: 8px 10px max(10px,env(safe-area-inset-bottom)); border-top:.5px solid var(--b1); background: var(--dp); display:flex; gap:8px; align-items:flex-end; position: sticky; bottom: 0; }
+  .composer textarea { flex:1; resize: none; background: var(--c2); color: var(--cr); border:.5px solid var(--b2); border-radius: 14px; padding: 9px 12px; font: inherit; font-size:13px; max-height: 120px; min-height: 36px; line-height: 1.4; }
+  .composer textarea::placeholder { color: var(--sf); }
+  .composer .send { flex-shrink:0; padding: 8px 14px; border-radius: 999px; border:0; background: linear-gradient(135deg,var(--gd),var(--gl)); color:#0b0d18; font: inherit; font-size:13px; font-weight:600; cursor: pointer; }
+  .composer .send:disabled { opacity: 0.4; cursor: default; }
+  .char-counter { font-size:10px; color: var(--sf); text-align:right; padding: 0 12px 4px; background: var(--dp); }
+
+  .login-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:14px; text-align:center; padding: 20px; }
+  .login-wrap img { width: 64px; opacity: 0.85; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; padding:9px 14px; border-radius:999px; border:0; background: linear-gradient(135deg,var(--gd),var(--gl)); color:#0b0d18; font:inherit; font-size:13px; font-weight:600; text-decoration:none; cursor:pointer; }
+  .hidden { display:none !important; }
+  .toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); background: var(--c1); border:.5px solid var(--gd); padding: 10px 16px; border-radius: 999px; font-size: 13px; z-index: 99; opacity: 0; pointer-events:none; transition: opacity .2s; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- 로그인 화면 -->
+<div id="loginView" class="login-wrap hidden">
+  <img src="/icons/icon.svg" alt="TripMate"/>
+  <h2 style="margin:0;">로그인이 필요합니다</h2>
+  <div class="muted">채팅은 로그인 후 이용 가능해요.</div>
+  <a href="/auth/kakao" class="btn">카카오로 로그인</a>
+</div>
+
+<!-- 채팅 목록 -->
+<div id="listView" class="hidden">
+  <div class="topbar">
+    <a href="/matches">← 매칭</a>
+    <div class="title">채팅</div>
+    <a href="/" style="opacity:.6;">홈</a>
+  </div>
+  <div id="roomList"></div>
+</div>
+
+<!-- 채팅방 -->
+<div id="roomView" class="hidden">
+  <div class="room-header">
+    <a href="javascript:goList()" style="color:var(--cr);text-decoration:none;font-size:18px;flex-shrink:0;">←</a>
+    <div class="av" id="rh-av">?</div>
+    <div class="meta">
+      <div class="name" id="rh-name">-</div>
+      <div class="sub" id="rh-sub"></div>
+    </div>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="char-counter" id="charCounter" style="display:none;"></div>
+  <form class="composer" id="composer" autocomplete="off">
+    <textarea id="msgInput" rows="1" placeholder="메시지 입력 (Enter 전송, Shift+Enter 줄바꿈)" maxlength="200"></textarea>
+    <button class="send" id="sendBtn" type="submit">보내기</button>
+  </form>
+</div>
+
+<div id="toast" class="toast"></div>
+
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const state = { me: null, rooms: [], currentRoom: null, lastMsgId: 0, pollTimer: null, listPollTimer: null };
+
+  function show(el){ el.classList.remove('hidden'); }
+  function hide(el){ el.classList.add('hidden'); }
+  function toast(msg){
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+  function escapeHtml(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function fmtTime(s){
+    if(!s) return '';
+    const d = new Date(typeof s==='string'?s.replace(' ','T')+'Z':s);
+    const h = d.getHours(), m = d.getMinutes();
+    return `${h<12?'오전':'오후'} ${(h%12)||12}:${String(m).padStart(2,'0')}`;
+  }
+  function fmtDay(s){
+    if(!s) return '';
+    const d = new Date(typeof s==='string'?s.replace(' ','T')+'Z':s);
+    return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function fmtRel(s){
+    if(!s) return '';
+    const d = new Date(typeof s==='string'?s.replace(' ','T')+'Z':s);
+    const diff = Math.max(0, Date.now() - d.getTime());
+    const min = Math.floor(diff/60000);
+    if (min < 1) return '방금';
+    if (min < 60) return `${min}분 전`;
+    const hr = Math.floor(min/60);
+    if (hr < 24) return `${hr}시간 전`;
+    const day = Math.floor(hr/24);
+    if (day < 7) return `${day}일 전`;
+    return fmtDay(s);
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null; try { data = await res.json(); } catch { data = {}; }
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  // ===== bootstrap =====
+  async function bootstrap() {
+    const r = await api('/api/me');
+    if (!r.ok || !r.data?.user) { show($('loginView')); return; }
+    state.me = r.data.user;
+    const params = new URLSearchParams(location.search);
+    const roomId = Number(params.get('room'));
+    if (Number.isFinite(roomId) && roomId > 0) {
+      enterRoom(roomId);
+    } else {
+      goList();
+    }
+  }
+
+  // ===== List =====
+  async function goList() {
+    history.replaceState(null, '', '/chat');
+    if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
+    state.currentRoom = null;
+    state.lastMsgId = 0;
+    hide($('roomView'));
+    show($('listView'));
+    await loadRooms();
+    if (state.listPollTimer) clearInterval(state.listPollTimer);
+    state.listPollTimer = setInterval(loadRooms, 8000);
+  }
+
+  function avatarHtml(other) {
+    const url = other?.other_thumbnail || other?.other_profile;
+    if (url) return `<div class="av"><img src="${escapeHtml(url)}" alt=""/></div>`;
+    const initial = (other?.other_nickname || '?').slice(0,1);
+    return `<div class="av">${escapeHtml(initial)}</div>`;
+  }
+
+  async function loadRooms() {
+    const r = await api('/api/me/chats');
+    if (!r.ok) return;
+    state.rooms = r.data.rooms;
+    const list = $('roomList');
+    if (state.rooms.length === 0) {
+      list.innerHTML = `
+        <div class="empty">
+          아직 채팅방이 없어요.<br/>
+          <a href="/matches" style="color:var(--gd);text-decoration:none;">동반자 찾으러 가기 →</a>
+        </div>
+      `;
+      return;
+    }
+    list.innerHTML = '';
+    for (const room of state.rooms) {
+      const el = document.createElement('div');
+      el.className = 'room';
+      const lastSnippet = room.last_message ? escapeHtml(room.last_message.slice(0, 60)) : '대화를 시작해보세요';
+      const lastTime = room.last_message_at ? fmtRel(room.last_message_at) : '';
+      const demoBadge = room.other_is_demo ? '<span class="badge-demo">DEMO</span>' : '';
+      const unreadBadge = room.unread_count > 0 ? `<span class="unread">${room.unread_count}</span>` : '';
+      el.innerHTML = `
+        ${avatarHtml(room)}
+        <div class="info">
+          <div class="row1">
+            <div class="name">${escapeHtml(room.other_nickname || '유저 #' + room.other_user_id)}${demoBadge}${unreadBadge}</div>
+            <div class="time">${lastTime}</div>
+          </div>
+          <div class="last">${lastSnippet}</div>
+        </div>
+      `;
+      el.addEventListener('click', () => enterRoom(room.room_id));
+      list.appendChild(el);
+    }
+  }
+
+  // ===== Room =====
+  async function enterRoom(roomId) {
+    if (state.listPollTimer) { clearInterval(state.listPollTimer); state.listPollTimer = null; }
+    state.currentRoom = null;
+    state.lastMsgId = 0;
+    hide($('listView'));
+    show($('roomView'));
+    history.replaceState(null, '', '/chat?room=' + roomId);
+
+    const r = await api('/api/me/chats/' + roomId);
+    if (!r.ok) {
+      toast(r.data?.error || '방을 열 수 없어요');
+      goList();
+      return;
+    }
+    state.currentRoom = r.data.room;
+    $('rh-av').innerHTML = (state.currentRoom.other_thumbnail || state.currentRoom.other_profile)
+      ? `<img src="${escapeHtml(state.currentRoom.other_thumbnail || state.currentRoom.other_profile)}" alt=""/>`
+      : escapeHtml((state.currentRoom.other_nickname || '?').slice(0, 1));
+    $('rh-name').textContent = state.currentRoom.other_nickname || ('유저 #' + state.currentRoom.other_user_id);
+    $('rh-sub').textContent = `글자 ${state.currentRoom.char_limit}자 / 일 ${state.currentRoom.daily_cap}회 제한${state.currentRoom.other_is_demo ? ' · 데모 사용자' : ''}`;
+
+    await loadMessages(true);
+    if (state.pollTimer) clearInterval(state.pollTimer);
+    state.pollTimer = setInterval(() => loadMessages(false), 4000);
+    await api('/api/me/chats/' + roomId + '/read', { method: 'POST' });
+    setTimeout(() => $('msgInput').focus(), 100);
+  }
+
+  function appendMessage(m, scroll) {
+    const wrap = $('messages');
+    if (m.type === 'system') {
+      const el = document.createElement('div');
+      el.className = 'msg system';
+      el.textContent = m.body;
+      wrap.appendChild(el);
+    } else {
+      const mine = Number(m.sender_id) === Number(state.me.id);
+      // date divider if day changed
+      const last = wrap.lastElementChild?.dataset?.day;
+      const day = fmtDay(m.created_at);
+      if (day && day !== last) {
+        const dv = document.createElement('div');
+        dv.className = 'date-divider';
+        dv.textContent = day;
+        dv.dataset.day = day;
+        wrap.appendChild(dv);
+      }
+      const el = document.createElement('div');
+      el.className = 'msg ' + (mine ? 'mine' : 'theirs');
+      el.textContent = m.body;
+      el.dataset.day = day;
+      wrap.appendChild(el);
+      const t = document.createElement('div');
+      t.className = 'msg-time ' + (mine ? 'mine' : 'theirs');
+      t.textContent = fmtTime(m.created_at);
+      t.dataset.day = day;
+      wrap.appendChild(t);
+    }
+    if (m.id > state.lastMsgId) state.lastMsgId = m.id;
+    if (scroll) wrap.scrollTop = wrap.scrollHeight;
+  }
+
+  async function loadMessages(initial) {
+    if (!state.currentRoom) return;
+    const params = new URLSearchParams({ limit: '50' });
+    if (!initial && state.lastMsgId > 0) params.set('after', String(state.lastMsgId));
+    const r = await api(`/api/me/chats/${state.currentRoom.id}/messages?${params}`);
+    if (!r.ok) return;
+    if (initial) $('messages').innerHTML = '';
+    let added = 0;
+    for (const m of r.data.messages) {
+      // initial response is ASC, after-response is also ASC
+      appendMessage(m, false);
+      added += 1;
+    }
+    if (added > 0) {
+      $('messages').scrollTop = $('messages').scrollHeight;
+      // 새 메시지가 들어오면 읽음 처리
+      if (!initial) {
+        api('/api/me/chats/' + state.currentRoom.id + '/read', { method: 'POST' });
+      }
+    }
+  }
+
+  // composer
+  $('msgInput').addEventListener('input', () => {
+    const ta = $('msgInput');
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
+    const len = ta.value.length;
+    const limit = state.currentRoom?.char_limit || 200;
+    const cnt = $('charCounter');
+    if (len > limit * 0.7) { cnt.style.display = 'block'; cnt.textContent = `${len} / ${limit}`; }
+    else cnt.style.display = 'none';
+  });
+  $('msgInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('composer').dispatchEvent(new Event('submit', { cancelable: true })); }
+  });
+  $('composer').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = $('msgInput').value.trim();
+    if (!body || !state.currentRoom) return;
+    $('sendBtn').disabled = true;
+    try {
+      const r = await api('/api/me/chats/' + state.currentRoom.id + '/messages', { method: 'POST', body: { body } });
+      if (!r.ok) { toast(r.data?.error || '전송 실패'); return; }
+      $('msgInput').value = '';
+      $('msgInput').style.height = 'auto';
+      $('charCounter').style.display = 'none';
+      appendMessage(r.data.message, true);
+    } finally {
+      $('sendBtn').disabled = false;
+      $('msgInput').focus();
+    }
+  });
+
+  window.goList = goList;
+  bootstrap();
+</script>
+</body>
+</html>

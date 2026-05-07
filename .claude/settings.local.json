@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($f = \"public\\\\index.html\"; $size = \\(Get-Item $f\\).Length; \"size = $size bytes\"; Get-Content $f -TotalCount 80)",
+      "PowerShell(node src/migrate-schema.js)",
+      "PowerShell(node src/seed-master-data.js)"
+    ]
+  }
+}

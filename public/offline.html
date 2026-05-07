@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<meta name="theme-color" content="#0b0d18" />
+<title>TripMate - 오프라인</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", system-ui, sans-serif; background:#0b0d18; color:#f0ead6; }
+  body { display:flex; align-items:center; justify-content:center; padding: 24px; }
+  .wrap { width:100%; max-width: 360px; text-align:center; }
+  .icon { width: 96px; height: 96px; margin: 0 auto 20px; }
+  h1 { font-size: 22px; margin: 0 0 10px; letter-spacing: 0.02em; }
+  p { color: rgba(240,234,214,0.6); font-size: 14px; line-height: 1.6; margin: 0 0 22px; }
+  button { padding: 12px 22px; border: 0; border-radius: 999px; font-size: 14px; font-weight: 600; color:#0b0d18; background: linear-gradient(135deg,#f8d49a,#c9a84c); cursor: pointer; }
+  button:hover { filter: brightness(1.05); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <img class="icon" src="/icons/icon.svg" alt="TripMate" />
+    <h1>오프라인 상태입니다</h1>
+    <p>네트워크 연결을 확인한 뒤 다시 시도해 주세요.<br/>일부 캐시된 페이지는 그대로 이용 가능합니다.</p>
+    <button onclick="location.reload()">다시 시도</button>
+  </div>
+</body>
+</html>

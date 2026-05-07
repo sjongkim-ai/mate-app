@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<meta name="theme-color" content="#0b0d18" />
+<title>TripMate · 동반자 매칭</title>
+<style>
+  :root {
+    --bg:#0b0d18; --dp:#111422; --c1:#171b2e; --c2:#1c2035;
+    --b1:rgba(255,255,255,.07); --b2:rgba(255,255,255,.13);
+    --gd:#c9a84c; --gl:#e8cc80;
+    --cr:#f0ead6; --mu:rgba(240,234,214,.56); --sf:rgba(240,234,214,.28);
+    --tl:#2ec4a0; --ro:#e8637a; --pp:#9b8afa; --am:#f0a855;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", system-ui, sans-serif; background: var(--bg); color: var(--cr); display:flex; justify-content:center; }
+  #app { width:100%; max-width:480px; min-height:100vh; min-height:100dvh; padding: 18px 18px max(28px,env(safe-area-inset-bottom)); }
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding-bottom: 14px; border-bottom: .5px solid var(--b1); }
+  .brand { font-size: 14px; font-weight:600; letter-spacing:.04em; background: linear-gradient(135deg,#f8d49a,var(--gd),var(--ro)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .muted { color: var(--mu); font-size: 12px; line-height:1.5; }
+  h1 { font-size: 20px; margin: 18px 0 6px; }
+  .err { color: var(--ro); font-size: 13px; margin-top: 6px; min-height: 16px; }
+
+  .tabs { display:flex; gap:0; border-bottom: .5px solid var(--b1); margin-top: 16px; }
+  .tab { flex:1; padding: 10px 0; text-align:center; font-size:13px; cursor:pointer; color: var(--mu); border-bottom: 2px solid transparent; position: relative; }
+  .tab.on { color: var(--gd); border-bottom-color: var(--gd); font-weight: 600; }
+  .tab .count { display: inline-block; min-width: 18px; padding: 0 5px; height: 16px; border-radius: 999px; background: var(--ro); color:#fff; font-size: 10px; line-height: 16px; margin-left: 4px; }
+
+  .card { background: var(--c1); border:.5px solid var(--b1); border-radius: 14px; padding: 14px; margin-top: 10px; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; padding:8px 12px; border-radius: 10px; border:.5px solid var(--b2); background: var(--c2); color: var(--cr); font: inherit; font-size:12px; cursor:pointer; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.G { background: linear-gradient(135deg,var(--gd),var(--gl)); border:0; color:#0b0d18; font-weight:600; }
+  .btn.danger { background: rgba(232,99,122,0.14); color: var(--ro); border-color: rgba(232,99,122,0.4); }
+  .btn-sm { padding: 5px 9px; font-size: 11px; }
+
+  .row { display:flex; gap: 10px; align-items:center; }
+  .grow { flex:1; }
+
+  .uic { display:flex; gap:10px; padding:10px 0; }
+  .uic + .uic { border-top: .5px dashed var(--b1); }
+  .av { width:44px; height:44px; border-radius:50%; background: linear-gradient(135deg,var(--c2),var(--c1)); border: 1.5px solid var(--gd); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; color: var(--gd); overflow:hidden; }
+  .av img { width:100%; height:100%; object-fit:cover; }
+  .info { flex:1; min-width:0; }
+  .info .name { font-size: 13px; font-weight: 500; color: var(--cr); }
+  .info .sub { font-size: 11px; color: var(--mu); margin-top: 2px; line-height: 1.4; }
+  .info .bio { font-size: 12px; color: var(--cr); margin-top: 4px; line-height: 1.4; opacity: 0.9; word-break: break-word; }
+
+  .badge { display:inline-block; padding: 2px 7px; border-radius: 999px; font-size: 10px; border:.5px solid var(--b2); color: var(--mu); }
+  .badge.green { background: rgba(46,196,160,0.14); color: var(--tl); border-color: var(--tl); }
+  .badge.amber { background: rgba(240,168,85,0.14); color: var(--am); border-color: var(--am); }
+  .badge.red { background: rgba(232,99,122,0.14); color: var(--ro); border-color: var(--ro); }
+  .badge.purple { background: rgba(155,138,250,0.14); color: var(--pp); border-color: var(--pp); }
+
+  .input { width:100%; background: var(--c2); color: var(--cr); border:.5px solid var(--b2); border-radius: 10px; padding: 9px 11px; font: inherit; font-size: 13px; }
+
+  .login-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height: 70vh; gap:14px; text-align:center; }
+  .login-wrap img { width: 64px; opacity: 0.85; }
+  .toast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); background: var(--c1); border:.5px solid var(--gd); padding: 10px 16px; border-radius: 999px; font-size: 13px; z-index: 99; opacity: 0; pointer-events:none; transition: opacity .2s; }
+  .toast.show { opacity: 1; }
+  .modal-bg { position: fixed; inset:0; background: rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index: 50; padding: 16px; }
+  .modal { width:100%; max-width: 420px; background: var(--c1); border:.5px solid var(--b2); border-radius: 14px; padding: 20px; max-height: 92vh; overflow:auto; }
+  .hidden { display:none !important; }
+
+  .empty { text-align:center; color: var(--sf); padding: 30px 0; font-size: 12px; }
+  .notif-bell { position: relative; cursor:pointer; }
+  .notif-dot { position: absolute; top: -2px; right: -4px; min-width:14px; height: 14px; border-radius: 999px; background: var(--ro); color:#fff; font-size: 9px; line-height:14px; padding: 0 4px; text-align:center; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="mainView" class="hidden">
+  <div class="topbar">
+    <div class="brand">TripMate · 매칭</div>
+    <div class="row" style="gap:14px;">
+      <div class="notif-bell" id="notifBell" title="알림">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="var(--cr)" stroke-width="1.4"><path d="M5 8a5 5 0 0 1 10 0v3l1.5 2H3.5L5 11V8z"/><path d="M8 15a2 2 0 0 0 4 0"/></svg>
+        <span id="notifDot" class="notif-dot hidden">0</span>
+      </div>
+      <a href="/" class="muted" style="text-decoration:none;font-size:12px;">← 홈</a>
+    </div>
+  </div>
+
+  <h1>동반자 매칭</h1>
+  <div class="muted">다른 사용자에게 동반자 신청을 보내고, 받은 신청을 승인하거나 거절할 수 있어요.</div>
+
+  <!-- 비회원 안내 배너 -->
+  <div id="guestBanner" class="hidden" style="margin-top:14px;padding:11px 14px;background:linear-gradient(135deg,rgba(201,168,76,0.10),rgba(46,196,160,0.06));border:.5px solid var(--gd);border-radius:14px;display:flex;align-items:center;gap:10px;">
+    <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gd),var(--gl));display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">🔍</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:12px;font-weight:500;color:var(--cr)">비회원 둘러보기</div>
+      <div class="muted" style="font-size:10px;margin-top:2px;line-height:1.4">로그인하면 동반자 신청·승인·매칭이 가능해요</div>
+    </div>
+    <a href="/auth/kakao" class="btn G btn-sm" style="text-decoration:none;flex-shrink:0">로그인</a>
+  </div>
+
+  <!-- 내 카카오 기본 정보 카드 -->
+  <div class="card" id="meCard" style="margin-top:14px;">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:600;">내 카카오 정보</div>
+      <span class="muted" style="font-size:11px;">로그인 시 자동 입력</span>
+    </div>
+    <div id="meInfo" class="muted" style="font-size:12px;line-height:1.7;"></div>
+    <div class="muted" style="font-size:10px;margin-top:8px;padding-top:8px;border-top:.5px dashed var(--b1);">개인정보 보호를 위해 본명은 수집·저장하지 않습니다. 닉네임으로만 식별됩니다.</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-tab="incoming">받은 신청<span class="count hidden" id="cnt-incoming">0</span></div>
+    <div class="tab" data-tab="outgoing">보낸 신청<span class="count hidden" id="cnt-outgoing">0</span></div>
+    <div class="tab" data-tab="accepted">매칭됨<span class="count hidden" id="cnt-accepted">0</span></div>
+    <div class="tab" data-tab="discover">동반자 찾기</div>
+  </div>
+
+  <div id="pane-incoming" class="card">
+    <div id="list-incoming"></div>
+  </div>
+  <div id="pane-outgoing" class="card hidden">
+    <div id="list-outgoing"></div>
+  </div>
+  <div id="pane-accepted" class="card hidden">
+    <div id="list-accepted"></div>
+  </div>
+  <div id="pane-discover" class="card hidden">
+    <div class="row" style="margin-bottom:10px;">
+      <input id="discoverQ" class="input grow" placeholder="닉네임/이름 검색"/>
+      <button class="btn btn-sm" id="discoverSearch">검색</button>
+    </div>
+    <div id="list-discover"></div>
+  </div>
+</div>
+
+<!-- 알림 모달 -->
+<div id="notifModal" class="modal-bg hidden">
+  <div class="modal">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:15px;font-weight:600;">알림</div>
+      <div class="row" style="gap:6px;">
+        <button class="btn btn-sm" id="readAllBtn">모두 읽음</button>
+        <button class="btn btn-sm" id="notifClose">닫기</button>
+      </div>
+    </div>
+    <div id="notifList"></div>
+  </div>
+</div>
+
+<!-- 사용자 프로필 카드 모달 -->
+<div id="profileModal" class="modal-bg hidden">
+  <div class="modal" style="max-width:440px;">
+    <div class="row" style="justify-content:space-between;margin-bottom:6px;">
+      <div id="profileModalContext" style="font-size:11px;color:var(--gd);font-weight:600;letter-spacing:.04em;"></div>
+      <button id="profileClose" class="btn btn-secondary btn-sm" style="border:0;background:transparent;color:var(--mu);font-size:18px;padding:0 6px;">×</button>
+    </div>
+    <div id="profileBody"></div>
+    <div id="profileActions" class="row" style="gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;"></div>
+    <div id="profileErr" class="err"></div>
+  </div>
+</div>
+
+<!-- 매칭 신청 모달 -->
+<div id="requestModal" class="modal-bg hidden">
+  <div class="modal">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">동반자 신청 보내기</div>
+    <div class="muted" id="requestTo"></div>
+    <textarea id="requestMessage" class="input" maxlength="200" rows="4" placeholder="(선택) 함께 가고 싶은 여행지, 일정 등을 200자 이내로 적어보세요." style="margin-top:10px;"></textarea>
+    <div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px;">
+      <button class="btn btn-sm" id="requestCancel">취소</button>
+      <button class="btn G btn-sm" id="requestSubmit">신청 보내기</button>
+    </div>
+    <div id="requestErr" class="err"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const state = { activeTab: 'incoming', requestTarget: null, me: null, prevUnread: null, profileTarget: null, guest: false };
+
+  function loginPrompt() {
+    if (confirm('이 기능은 로그인 후 이용할 수 있어요. 로그인할까요?')) {
+      location.href = '/auth/kakao';
+    }
+  }
+
+  function show(el){ el.classList.remove('hidden'); }
+  function hide(el){ el.classList.add('hidden'); }
+  function toast(msg){
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+  function escapeHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function fmtRel(s){
+    if(!s) return '';
+    const d = new Date(typeof s==='string'?s.replace(' ','T')+'Z':s);
+    const diff = Math.max(0, Date.now() - d.getTime());
+    const min = Math.floor(diff/60000);
+    if (min < 1) return '방금';
+    if (min < 60) return `${min}분 전`;
+    const hr = Math.floor(min/60);
+    if (hr < 24) return `${hr}시간 전`;
+    const day = Math.floor(hr/24);
+    if (day < 7) return `${day}일 전`;
+    return d.toISOString().slice(0,10);
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null; try { data = await res.json(); } catch { data = {}; }
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  function avatarHtml(u) {
+    const url = u.other_thumbnail || u.other_profile || u.thumbnail_image_url || u.profile_image_url;
+    if (url) return `<div class="av"><img src="${escapeHtml(url)}" alt=""/></div>`;
+    const initial = (u.other_nickname || u.nickname || u.other_name || u.name || '?').slice(0,1);
+    return `<div class="av">${escapeHtml(initial)}</div>`;
+  }
+
+  // ===== Auth =====
+  async function bootstrap() {
+    const r = await api('/api/me');
+    state.me = r.data?.user || null;
+    state.guest = !state.me;
+    show($('mainView'));
+    bindTabs();
+    if (state.guest) {
+      show($('guestBanner'));
+      hide($('meCard'));
+      hide($('notifBell'));
+      // 비회원은 동반자 찾기만 의미있음 — 디스커버 탭 기본
+      switchTab('discover');
+    } else {
+      hide($('guestBanner'));
+      renderMeCard();
+      await Promise.all([loadList('incoming'), loadList('outgoing'), loadList('accepted'), refreshUnreadCount()]);
+    }
+  }
+
+  function valOrDeny(v) {
+    if (v == null || v === '') return '<span class="badge red">미동의</span>';
+    return escapeHtml(v);
+  }
+  function genderLabel(g) {
+    if (!g) return null;
+    return g === 'male' ? '남' : g === 'female' ? '여' : g;
+  }
+  function renderMeCard() {
+    const u = state.me;
+    const nickname = u.nickname || `유저 #${u.id}`;
+    const gender = u.gender ? `<span class="badge purple">${escapeHtml(genderLabel(u.gender))}</span>` : valOrDeny(null);
+    const ageRange = u.age_range ? `<span class="badge">${escapeHtml(u.age_range)}</span>` : valOrDeny(null);
+    $('meInfo').innerHTML = `
+      <div>닉네임: <span style="color:var(--cr);">${escapeHtml(nickname)}</span></div>
+      <div>성별: ${gender}</div>
+      <div>연령대: ${ageRange}</div>
+    `;
+  }
+
+  // ===== Tabs =====
+  function bindTabs() {
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => switchTab(t.dataset.tab));
+    });
+  }
+  function switchTab(tab) {
+    state.activeTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
+    ['incoming','outgoing','accepted','discover'].forEach(k => {
+      const pane = $('pane-'+k);
+      if (k === tab) show(pane); else hide(pane);
+    });
+    if (tab === 'discover') loadDiscover();
+    else loadList(tab);
+  }
+
+  // ===== Profile card modal =====
+  const PERSONA_LABEL = {
+    explorer: ['🗺️','탐험가'],
+    aesthetic: ['🌸','감성가'],
+    planner: ['📋','계획가'],
+    spontaneous: ['🎲','즉흥가'],
+  };
+  function renderPreferenceCard(pref) {
+    if (!pref) return `<div class="muted" style="font-size:11px;margin-top:10px;padding:10px 12px;background:var(--c2);border-radius:10px;">아직 여행 성향 분석 결과가 없어요.</div>`;
+    const persona = PERSONA_LABEL[pref.personaType] || ['','-'];
+    const bars = ['explorer','aesthetic','planner','spontaneous'].map(k => {
+      const v = Number(pref.axes?.[k] || 0);
+      const [emoji, label] = PERSONA_LABEL[k];
+      return `
+        <div class="row" style="gap:8px;align-items:center;margin-bottom:5px;font-size:11px;">
+          <div style="width:64px;color:var(--mu);">${emoji} ${label}</div>
+          <div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;">
+            <div style="width:${v}%;height:100%;background:linear-gradient(90deg,var(--gd),var(--gl));"></div>
+          </div>
+          <div style="width:30px;text-align:right;color:var(--cr);font-family:'Cormorant Garamond',serif;">${v}</div>
+        </div>
+      `;
+    }).join('');
+    const dest = (pref.destinations || []).slice(0, 5).map(d => `<span class="badge amber">${escapeHtml(d)}</span>`).join(' ');
+    const tags = (pref.tags || []).slice(0, 6).map(t => `<span class="badge">${escapeHtml(t)}</span>`).join(' ');
+    return `
+      <div style="margin-top:12px;padding:12px;background:var(--c2);border-radius:10px;">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:500;">여행 성향 ${persona[0]} ${persona[1]}</div>
+        </div>
+        ${bars}
+        ${pref.summary ? `<div class="muted" style="font-size:11px;margin-top:8px;font-style:italic;">"${escapeHtml(pref.summary)}"</div>` : ''}
+        ${dest ? `<div style="margin-top:8px;"><div class="muted" style="font-size:10px;margin-bottom:4px;">추천 여행지</div><div>${dest}</div></div>` : ''}
+        ${tags ? `<div style="margin-top:8px;"><div class="muted" style="font-size:10px;margin-bottom:4px;">선호 키워드</div><div>${tags}</div></div>` : ''}
+      </div>
+    `;
+  }
+
+  function renderProfileCard(u, pref, interests) {
+    const subBadges = [
+      u.age_range ? `<span class="badge">${escapeHtml(u.age_range)}</span>` : '',
+      u.gender ? `<span class="badge purple">${escapeHtml(genderLabel(u.gender))}</span>` : '',
+      u.mbti ? `<span class="badge purple">${escapeHtml(u.mbti)}</span>` : '',
+    ].filter(Boolean).join(' ');
+    const interestsHtml = (interests && interests.length)
+      ? `<div style="margin-top:12px;"><div class="muted" style="font-size:11px;margin-bottom:6px;">관심 태그</div><div>${interests.map(t => `<span class="badge">${escapeHtml(t)}</span>`).join(' ')}</div></div>`
+      : '';
+    return `
+      <div class="row" style="gap:14px;align-items:flex-start;margin-bottom:8px;">
+        <div class="av" style="width:64px;height:64px;font-size:24px;">
+          ${(u.profile_image_url || u.thumbnail_image_url) ? `<img src="${escapeHtml(u.profile_image_url || u.thumbnail_image_url)}" alt=""/>` : escapeHtml((u.nickname||'?').slice(0,1))}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:18px;font-weight:600;color:var(--cr);">${escapeHtml(u.nickname || ('유저 #'+u.id))}</div>
+          <div style="margin-top:4px;">${subBadges}</div>
+          ${u.residence ? `<div class="muted" style="font-size:11px;margin-top:4px;">📍 ${escapeHtml(u.residence)}</div>` : ''}
+          <div class="muted" style="font-size:10px;margin-top:4px;">Lv ${u.level || 1} · ${u.xp_total || 0} XP</div>
+        </div>
+      </div>
+      ${u.bio ? `<div style="font-size:13px;line-height:1.55;margin:10px 0;padding:10px 12px;background:var(--c2);border-radius:10px;color:var(--cr);">${escapeHtml(u.bio)}</div>` : ''}
+      ${renderPreferenceCard(pref)}
+      ${interestsHtml}
+    `;
+  }
+
+  function renderProfileActions(opts, match) {
+    if (opts.mode === 'incoming') {
+      return `
+        <button class="btn danger btn-sm" data-pa="decline">거절</button>
+        <button class="btn G btn-sm" data-pa="accept">동반자 신청 승인</button>
+      `;
+    }
+    if (opts.mode === 'outgoing') {
+      return `
+        <span class="badge amber">신청 대기 중</span>
+        <button class="btn btn-sm" data-pa="cancel">신청 취소</button>
+      `;
+    }
+    if (opts.mode === 'discover') {
+      const status = match?.status;
+      if (status === 'pending') {
+        return Number(match.requested_by) === Number(state.me.id)
+          ? `<span class="badge amber">신청 대기 중</span>`
+          : `<button class="btn G btn-sm" data-pa="show-incoming">받은 신청 보기</button>`;
+      }
+      if (status === 'accepted') return `<span class="badge green">매칭됨</span>`;
+      if (status === 'declined') return `<span class="badge red">거절됨</span>`;
+      return `<button class="btn G btn-sm" data-pa="request">동반자 신청 보내기</button>`;
+    }
+    if (opts.mode === 'accepted') {
+      return `<span class="badge green">매칭됨</span>`;
+    }
+    return '';
+  }
+
+  async function openProfileModal(userId, opts = {}) {
+    $('profileErr').textContent = '';
+    $('profileBody').innerHTML = '<div class="muted" style="padding:30px 0;text-align:center;">불러오는 중...</div>';
+    $('profileActions').innerHTML = '';
+    state.profileTarget = { userId, opts };
+    show($('profileModal'));
+
+    const r = await api(`/api/me/users/${userId}/profile`);
+    if (!r.ok) {
+      $('profileBody').innerHTML = `<div class="err">${escapeHtml(r.data?.error || '조회 실패')}</div>`;
+      return;
+    }
+    const ctxLabel = opts.mode === 'incoming' ? '💌 받은 동반자 신청'
+                  : opts.mode === 'outgoing' ? '✈ 보낸 동반자 신청'
+                  : opts.mode === 'accepted' ? '✨ 매칭된 동반자'
+                  : '👤 사용자 프로필';
+    $('profileModalContext').textContent = ctxLabel;
+    $('profileBody').innerHTML = renderProfileCard(r.data.user, r.data.preference, r.data.interests);
+    $('profileActions').innerHTML = renderProfileActions(opts, r.data.match);
+    bindProfileActions(opts, userId);
+  }
+
+  function bindProfileActions(opts, userId) {
+    const wrap = $('profileActions');
+    wrap.querySelectorAll('button[data-pa]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const action = b.dataset.pa;
+        // 비회원은 모든 인터랙션이 로그인 필요
+        if (state.guest) {
+          if (action === 'show-incoming') { hide($('profileModal')); switchTab('incoming'); return; }
+          loginPrompt();
+          return;
+        }
+        if (action === 'accept') {
+          await acceptMatch(opts.matchId);
+          if (opts.notifId) await markRead(opts.notifId);
+          hide($('profileModal'));
+        } else if (action === 'decline') {
+          if (!confirm('이 신청을 거절할까요?')) return;
+          await declineMatch(opts.matchId);
+          if (opts.notifId) await markRead(opts.notifId);
+          hide($('profileModal'));
+        } else if (action === 'cancel') {
+          await cancelMatch(opts.matchId);
+          hide($('profileModal'));
+        } else if (action === 'request') {
+          hide($('profileModal'));
+          const u = state.profileTarget?.opts?.userInfo;
+          openRequest(userId, u?.nickname || ('유저 #' + userId));
+        } else if (action === 'show-incoming') {
+          hide($('profileModal'));
+          switchTab('incoming');
+        }
+      });
+    });
+  }
+
+  $('profileClose').addEventListener('click', () => hide($('profileModal')));
+
+  // ===== Lists =====
+  function statusBadge(status) {
+    const map = { pending:['amber','대기'], accepted:['green','매칭됨'], declined:['red','거절'], expired:['','만료'], closed:['','종료'] };
+    const [c,t] = map[status] || ['',status];
+    return `<span class="badge ${c}">${t}</span>`;
+  }
+  function setCnt(id, n) {
+    const el = $('cnt-'+id);
+    el.textContent = n;
+    if (n > 0) show(el); else hide(el);
+  }
+
+  async function loadList(direction) {
+    if (state.guest) {
+      const list = $('list-'+direction);
+      list.innerHTML = `<div class="empty">로그인 후 이용할 수 있어요.<br/><a href="/auth/kakao" style="color:var(--gd);text-decoration:none;">카카오로 로그인 →</a></div>`;
+      setCnt(direction, 0);
+      return;
+    }
+    const params = new URLSearchParams();
+    if (direction === 'incoming') { params.set('direction','incoming'); params.set('status','pending'); }
+    else if (direction === 'outgoing') { params.set('direction','outgoing'); params.set('status','pending'); }
+    else if (direction === 'accepted') { params.set('status','accepted'); }
+    const r = await api('/api/me/matches?'+params.toString());
+    if (!r.ok) return;
+    const list = $('list-'+direction);
+    list.innerHTML = '';
+    setCnt(direction, r.data.matches.length);
+    if (r.data.matches.length === 0) {
+      const msg = direction==='incoming' ? '받은 신청이 없습니다.' : direction==='outgoing' ? '보낸 신청이 없습니다.' : '매칭된 동반자가 없습니다.';
+      list.innerHTML = `<div class="empty">${msg}</div>`;
+      return;
+    }
+    for (const m of r.data.matches) {
+      const div = document.createElement('div');
+      div.className = 'uic';
+      const sub = [
+        m.other_age_range ? `<span class="badge">${escapeHtml(m.other_age_range)}</span>` : '',
+        m.other_gender ? `<span class="badge purple">${escapeHtml(genderLabel(m.other_gender))}</span>` : '',
+        m.other_mbti ? `<span class="badge purple">${escapeHtml(m.other_mbti)}</span>` : '',
+        m.other_residence ? `<span class="badge">${escapeHtml(m.other_residence)}</span>` : '',
+        statusBadge(m.status),
+      ].filter(Boolean).join(' ');
+      let actions = '';
+      if (m.status === 'pending' && direction === 'incoming') {
+        actions = `<button class="btn G btn-sm" data-accept="${m.id}">승인</button>
+                   <button class="btn danger btn-sm" data-decline="${m.id}">거절</button>`;
+      } else if (m.status === 'pending' && direction === 'outgoing') {
+        actions = `<button class="btn btn-sm" data-cancel="${m.id}">취소</button>`;
+      } else if (m.status === 'accepted') {
+        actions = m.chat_room_id
+          ? `<button class="btn G btn-sm" data-chat="${m.chat_room_id}">💬 채팅</button>`
+          : '';
+      }
+      div.innerHTML = `
+        ${avatarHtml(m)}
+        <div class="info">
+          <div class="row" style="gap:6px;">
+            <span class="name">${escapeHtml(m.other_nickname || ('유저 #'+m.other_user_id))}</span>
+            <span class="muted" style="font-size:11px;">${fmtRel(m.created_at)}</span>
+          </div>
+          <div class="sub">${sub}</div>
+          ${m.other_bio ? `<div class="bio">${escapeHtml(m.other_bio)}</div>` : ''}
+        </div>
+        <div class="row" style="gap:6px;flex-shrink:0;flex-direction:column;">${actions}</div>
+      `;
+      div.style.cursor = 'pointer';
+      div.addEventListener('click', () => {
+        openProfileModal(m.other_user_id, { mode: direction === 'accepted' ? 'accepted' : direction, matchId: m.id });
+      });
+      list.appendChild(div);
+    }
+    // 버튼 클릭은 행 클릭(프로필 모달)과 충돌하지 않게 stopPropagation 처리
+    list.querySelectorAll('button[data-accept]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); acceptMatch(Number(b.dataset.accept)); }));
+    list.querySelectorAll('button[data-decline]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); declineMatch(Number(b.dataset.decline)); }));
+    list.querySelectorAll('button[data-cancel]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); cancelMatch(Number(b.dataset.cancel)); }));
+    list.querySelectorAll('button[data-chat]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); location.href = '/chat?room=' + b.dataset.chat; }));
+  }
+
+  async function acceptMatch(id) {
+    const r = await api(`/api/me/matches/${id}/accept`, { method:'POST' });
+    if (!r.ok) { toast(r.data?.error || '승인 실패'); return; }
+    toast('동반자 신청을 승인했습니다.');
+    await Promise.all([loadList('incoming'), loadList('accepted')]);
+  }
+  async function declineMatch(id) {
+    if (!confirm('이 신청을 거절할까요?')) return;
+    const r = await api(`/api/me/matches/${id}/decline`, { method:'POST' });
+    if (!r.ok) { toast(r.data?.error || '거절 실패'); return; }
+    toast('신청을 거절했습니다.');
+    await loadList('incoming');
+  }
+  async function cancelMatch(id) {
+    if (!confirm('이 신청을 취소할까요?')) return;
+    const r = await api(`/api/me/matches/${id}/cancel`, { method:'POST' });
+    if (!r.ok) { toast(r.data?.error || '취소 실패'); return; }
+    toast('신청을 취소했습니다.');
+    await loadList('outgoing');
+  }
+
+  // ===== Discover =====
+  async function loadDiscover() {
+    const q = $('discoverQ').value.trim();
+    const r = await api('/api/me/discover' + (q ? '?q='+encodeURIComponent(q) : ''));
+    if (!r.ok) return;
+    const list = $('list-discover'); list.innerHTML = '';
+    if (r.data.users.length === 0) {
+      list.innerHTML = '<div class="empty">검색 결과가 없습니다.</div>';
+      return;
+    }
+    for (const u of r.data.users) {
+      const div = document.createElement('div');
+      div.className = 'uic';
+      let cta = `<button class="btn G btn-sm" data-req="${u.id}" data-name="${escapeHtml(u.nickname||u.name||('유저 #'+u.id))}">신청</button>`;
+      if (u.match_status === 'pending') {
+        cta = u.match_requested_by == state.me.id
+          ? `<span class="badge amber">신청 중</span>`
+          : `<button class="btn G btn-sm" data-incoming="1">받은 신청 보기</button>`;
+      } else if (u.match_status === 'accepted') {
+        cta = `<span class="badge green">매칭됨</span>`;
+      } else if (u.match_status === 'declined') {
+        cta = `<span class="badge red">거절됨</span>`;
+      }
+      const sub = [
+        u.age_range ? `<span class="badge">${escapeHtml(u.age_range)}</span>` : '',
+        u.gender ? `<span class="badge purple">${escapeHtml(genderLabel(u.gender))}</span>` : '',
+        u.mbti ? `<span class="badge purple">${escapeHtml(u.mbti)}</span>` : '',
+        u.residence ? `<span class="badge">${escapeHtml(u.residence)}</span>` : '',
+      ].filter(Boolean).join(' ');
+      div.innerHTML = `
+        ${avatarHtml(u)}
+        <div class="info">
+          <div class="name">${escapeHtml(u.nickname || ('유저 #'+u.id))}</div>
+          <div class="sub">${sub}</div>
+          ${u.bio ? `<div class="bio">${escapeHtml(u.bio)}</div>` : ''}
+        </div>
+        <div class="row" style="gap:6px;flex-shrink:0;flex-direction:column;">${cta}</div>
+      `;
+      div.style.cursor = 'pointer';
+      div.addEventListener('click', () => openProfileModal(u.id, { mode: 'discover' }));
+      list.appendChild(div);
+    }
+    list.querySelectorAll('button[data-req]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openRequest(Number(b.dataset.req), b.dataset.name); }));
+    list.querySelectorAll('button[data-incoming]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); switchTab('incoming'); }));
+  }
+  $('discoverSearch').addEventListener('click', loadDiscover);
+  $('discoverQ').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadDiscover(); });
+
+  // ===== Request modal =====
+  function openRequest(targetId, name) {
+    if (state.guest) { loginPrompt(); return; }
+    state.requestTarget = targetId;
+    $('requestTo').textContent = `${name}님에게 신청`;
+    $('requestMessage').value = '';
+    $('requestErr').textContent = '';
+    show($('requestModal'));
+  }
+  $('requestCancel').addEventListener('click', () => hide($('requestModal')));
+  $('requestSubmit').addEventListener('click', async () => {
+    $('requestErr').textContent = '';
+    const message = $('requestMessage').value.trim();
+    const r = await api('/api/me/matches/request', {
+      method: 'POST',
+      body: { targetUserId: state.requestTarget, message },
+    });
+    if (!r.ok) { $('requestErr').textContent = r.data?.error || '신청 실패'; return; }
+    hide($('requestModal'));
+    if (r.data.autoAccepted && r.data.chatRoomId) {
+      toast('🎉 매칭 성사! 채팅으로 이동합니다');
+      setTimeout(() => { location.href = '/chat?room=' + r.data.chatRoomId; }, 800);
+      return;
+    }
+    toast('신청을 보냈습니다.');
+    await Promise.all([loadDiscover(), loadList('outgoing')]);
+  });
+
+  // ===== Notifications =====
+  $('notifBell').addEventListener('click', openNotifModal);
+  $('notifClose').addEventListener('click', () => hide($('notifModal')));
+  $('readAllBtn').addEventListener('click', async () => {
+    await api('/api/me/notifications/read-all', { method:'POST' });
+    await Promise.all([loadNotifs(), refreshUnreadCount()]);
+  });
+
+  async function refreshUnreadCount() {
+    const r = await api('/api/me/notifications/unread-count');
+    if (!r.ok) return;
+    const newCount = r.data.count;
+    if (state.prevUnread != null && newCount > state.prevUnread) {
+      // 폴링 사이에 새 알림 도착 → 안내 토스트 + 받은 신청 리스트 자동 갱신
+      toast(`💌 새 동반자 신청이 도착했어요 (+${newCount - state.prevUnread})`);
+      if (state.activeTab === 'incoming') loadList('incoming');
+    }
+    state.prevUnread = newCount;
+    const dot = $('notifDot');
+    if (newCount > 0) { dot.textContent = newCount > 99 ? '99+' : newCount; show(dot); }
+    else hide(dot);
+  }
+
+  async function openNotifModal() {
+    show($('notifModal'));
+    await loadNotifs();
+  }
+
+  async function loadNotifs() {
+    const r = await api('/api/me/notifications?limit=30');
+    if (!r.ok) return;
+    const list = $('notifList'); list.innerHTML = '';
+    if (r.data.notifications.length === 0) {
+      list.innerHTML = '<div class="empty">알림이 없습니다.</div>';
+      return;
+    }
+    for (const n of r.data.notifications) {
+      const unread = !n.read_at;
+      const div = document.createElement('div');
+      div.className = 'uic';
+      div.style.opacity = unread ? '1' : '0.65';
+      let action = '';
+      if (n.type === 'match_request' && n.payload?.matchId) {
+        action = `<button class="btn btn-sm" data-nview="${n.payload.fromUserId || ''}" data-nmatch="${n.payload.matchId}" data-nid="${n.id}">프로필</button>
+                  <button class="btn G btn-sm" data-naccept="${n.payload.matchId}" data-nid="${n.id}">승인</button>
+                  <button class="btn danger btn-sm" data-ndecline="${n.payload.matchId}" data-nid="${n.id}">거절</button>`;
+      } else if (n.type === 'match_accepted') {
+        action = `<button class="btn btn-sm" data-goto-accepted="1" data-nid="${n.id}">매칭 보기</button>`;
+      }
+      div.innerHTML = `
+        <div class="av" style="border-color:${unread?'var(--gd)':'var(--b2)'};font-size:18px;">${n.type==='match_request'?'💌':n.type==='match_accepted'?'✨':n.type==='match_declined'?'✕':'🔔'}</div>
+        <div class="info">
+          <div class="name">${escapeHtml(n.title || '')}${unread?' <span class="badge amber" style="margin-left:6px;">새 알림</span>':''}</div>
+          <div class="sub" style="color:var(--cr);font-size:12px;">${escapeHtml(n.body || '')}</div>
+          <div class="muted" style="font-size:10px;margin-top:4px;">${fmtRel(n.created_at)}</div>
+        </div>
+        <div class="row" style="gap:6px;flex-shrink:0;flex-direction:column;">${action}</div>
+      `;
+      list.appendChild(div);
+    }
+    list.querySelectorAll('button[data-nview]').forEach(b => b.addEventListener('click', async () => {
+      const userId = Number(b.dataset.nview);
+      const matchId = Number(b.dataset.nmatch);
+      const nid = Number(b.dataset.nid);
+      if (!userId) return;
+      hide($('notifModal'));
+      await openProfileModal(userId, { mode: 'incoming', matchId, notifId: nid });
+    }));
+    list.querySelectorAll('button[data-naccept]').forEach(b => b.addEventListener('click', async () => {
+      await acceptMatch(Number(b.dataset.naccept));
+      await markRead(Number(b.dataset.nid));
+      await Promise.all([loadNotifs(), refreshUnreadCount()]);
+    }));
+    list.querySelectorAll('button[data-ndecline]').forEach(b => b.addEventListener('click', async () => {
+      await declineMatch(Number(b.dataset.ndecline));
+      await markRead(Number(b.dataset.nid));
+      await Promise.all([loadNotifs(), refreshUnreadCount()]);
+    }));
+    list.querySelectorAll('button[data-goto-accepted]').forEach(b => b.addEventListener('click', async () => {
+      await markRead(Number(b.dataset.nid));
+      hide($('notifModal'));
+      switchTab('accepted');
+      await refreshUnreadCount();
+    }));
+  }
+  async function markRead(id) {
+    await api(`/api/me/notifications/${id}/read`, { method:'POST' });
+  }
+
+  // 30초마다 새 알림 갱신 (간이 polling)
+  setInterval(() => { if (state.me) refreshUnreadCount(); }, 30000);
+
+  bootstrap();
+</script>
+</body>
+</html>

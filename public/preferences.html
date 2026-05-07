@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<meta name="theme-color" content="#0b0d18" />
+<title>TripMate · 여행 성향 분석</title>
+<style>
+  :root {
+    --bg:#0b0d18; --dp:#111422; --c1:#171b2e; --c2:#1c2035;
+    --b1:rgba(255,255,255,.07); --b2:rgba(255,255,255,.13);
+    --gd:#c9a84c; --gl:#e8cc80;
+    --cr:#f0ead6; --mu:rgba(240,234,214,.56); --sf:rgba(240,234,214,.28);
+    --tl:#2ec4a0; --ro:#e8637a; --pp:#9b8afa; --am:#f0a855;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", system-ui, sans-serif; background: var(--bg); color: var(--cr); display:flex; justify-content:center; }
+  #app { width:100%; max-width:480px; min-height: 100vh; min-height: 100dvh; padding: 18px 18px max(28px,env(safe-area-inset-bottom)); }
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding-bottom: 14px; border-bottom: .5px solid var(--b1); }
+  .brand { font-size: 14px; font-weight: 600; letter-spacing:.04em; background: linear-gradient(135deg,#f8d49a,var(--gd),var(--ro)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  h1 { font-size: 20px; margin: 18px 0 6px; }
+  .muted { color: var(--mu); font-size: 12px; line-height:1.5; }
+  .err { color: var(--ro); font-size: 13px; margin-top: 6px; min-height: 16px; }
+  .ok-msg { color: var(--tl); font-size: 13px; margin-top:6px; }
+
+  .card { background: var(--c1); border:.5px solid var(--b1); border-radius: 14px; padding: 16px; margin-top: 14px; }
+  .card h2 { font-size: 14px; margin: 0 0 10px; letter-spacing:.04em; color: var(--cr); }
+  .card .sub { font-size:11px; color: var(--mu); }
+
+  .btn { display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius: 12px; border:.5px solid var(--b2); background: var(--c2); color: var(--cr); font: inherit; font-size:13px; cursor:pointer; }
+  .btn:disabled { opacity:.55; cursor:default; }
+  .btn.G { background: linear-gradient(135deg,var(--gd),var(--gl)); border:0; color:#0b0d18; font-weight:600; }
+  .btn.danger { background: rgba(232,99,122,0.14); color: var(--ro); border-color: rgba(232,99,122,0.4); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; border-radius:10px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .grow { flex:1; }
+
+  input[type="text"], input[type="url"], textarea, select {
+    width: 100%; background: var(--c2); color: var(--cr); border: .5px solid var(--b2); border-radius: 10px; padding: 10px 12px; font: inherit; font-size:13px;
+  }
+  input::placeholder, textarea::placeholder { color: var(--sf); }
+  textarea { min-height: 90px; resize: vertical; }
+  label { font-size: 12px; color: var(--mu); display:block; margin-bottom:6px; }
+
+  .badge { display:inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; border:.5px solid var(--b2); color: var(--mu); margin: 2px 4px 2px 0; }
+  .badge.green { background: rgba(46,196,160,0.14); color: var(--tl); border-color: var(--tl); }
+  .badge.amber { background: rgba(240,168,85,0.14); color: var(--am); border-color: var(--am); }
+  .badge.red { background: rgba(232,99,122,0.14); color: var(--ro); border-color: var(--ro); }
+  .badge.purple { background: rgba(155,138,250,0.14); color: var(--pp); border-color: var(--pp); }
+
+  .link-row { display:flex; gap:10px; align-items: flex-start; padding: 10px 0; border-top: .5px dashed var(--b1); }
+  .link-row:first-child { border-top:0; }
+  .link-row .info { flex:1; min-width:0; }
+  .link-row .url { font-size: 12px; color: var(--mu); word-break: break-all; }
+  .link-row .actions { display:flex; gap:6px; flex-wrap:wrap; }
+
+  /* axis sliders */
+  .axes { display: grid; gap: 14px; }
+  .axis-row { display:grid; grid-template-columns: 86px 1fr 44px; align-items:center; gap:10px; }
+  .axis-row .name { font-size: 12px; color: var(--cr); }
+  .axis-row .value { font-family: 'Cormorant Garamond', serif; font-size: 18px; text-align: right; color: var(--gd); }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; background: transparent;
+  }
+  input[type=range]::-webkit-slider-runnable-track { height: 4px; background: var(--b2); border-radius: 2px; }
+  input[type=range]::-moz-range-track { height: 4px; background: var(--b2); border-radius: 2px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance:none; width:18px; height:18px; border-radius: 50%; background: linear-gradient(135deg,#f8d49a,var(--gd)); margin-top:-7px; cursor: pointer; box-shadow: 0 0 8px rgba(201,168,76,0.4); }
+  input[type=range]::-moz-range-thumb { width:18px; height:18px; border-radius: 50%; background: linear-gradient(135deg,#f8d49a,var(--gd)); cursor: pointer; border:0; }
+
+  /* chip editor */
+  .chips { display:flex; flex-wrap: wrap; gap:6px; padding:6px; min-height: 42px; background: var(--c2); border:.5px solid var(--b2); border-radius:10px; }
+  .chip { display:inline-flex; gap:4px; align-items:center; padding: 4px 9px; border-radius: 999px; background: var(--c1); border: .5px solid var(--b2); font-size: 12px; color: var(--cr); }
+  .chip button { background:none; border:0; color: var(--sf); cursor:pointer; font-size:14px; line-height:1; padding:0 0 0 4px; }
+  .chips input { flex: 1; min-width: 80px; background: transparent; border:0; padding: 4px 6px; color: var(--cr); font-size:12px; outline: none; }
+
+  .login-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height: 70vh; gap:14px; text-align:center; }
+  .login-wrap img { width: 64px; opacity: 0.85; }
+  .toast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%); background: var(--c1); border:.5px solid var(--gd); padding: 10px 16px; border-radius: 999px; font-size: 13px; z-index: 99; opacity: 0; pointer-events:none; transition: opacity .2s; }
+  .toast.show { opacity: 1; }
+
+  .modal-bg { position: fixed; inset:0; background: rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index: 50; padding: 16px; }
+  .modal { width:100%; max-width: 420px; background: var(--c1); border:.5px solid var(--b2); border-radius: 14px; padding: 20px; max-height: 92vh; overflow:auto; }
+  .hidden { display:none !important; }
+
+  .platform-icon { display:inline-flex; width: 32px; height:32px; border-radius: 8px; background: var(--c2); align-items:center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--gd); flex-shrink:0; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="loginView" class="login-wrap hidden">
+  <img src="/icons/icon.svg" alt="TripMate"/>
+  <div>
+    <h1>로그인이 필요합니다</h1>
+    <div class="muted">여행 성향 분석은 로그인 후 이용 가능합니다.</div>
+  </div>
+  <a href="/auth/kakao" class="btn G">카카오로 로그인</a>
+</div>
+
+<div id="mainView" class="hidden">
+  <div class="topbar">
+    <div class="brand">TripMate</div>
+    <a href="/" class="muted" style="text-decoration:none;font-size:12px;">← 홈</a>
+  </div>
+
+  <h1>여행 성향 분석</h1>
+  <div class="muted">SNS·블로그 링크에서 텍스트를 가져와 AI가 4축 성향을 분석합니다. 결과는 직접 수정도 가능합니다.</div>
+
+  <!-- 외부 링크 카드 -->
+  <div class="card">
+    <h2>1. 분석할 링크 등록</h2>
+    <div class="sub">인스타그램, 네이버 블로그, 티스토리, 브런치, 유튜브 등의 공개 URL을 입력하세요. 가져오기에 실패하면 텍스트를 직접 붙여넣을 수 있습니다.</div>
+    <form id="linkForm" style="margin-top:12px;">
+      <div class="row">
+        <input id="linkUrl" type="text" placeholder="https://www.instagram.com/your_handle 또는 블로그 URL" class="grow" required />
+        <button type="submit" class="btn G btn-sm" id="linkAddBtn">추가</button>
+      </div>
+      <div id="linkErr" class="err"></div>
+    </form>
+    <div id="linksList" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- AI 분석 카드 -->
+  <div class="card">
+    <h2>2. AI 분석 실행</h2>
+    <div class="sub">위 링크들의 텍스트(또는 직접 입력 텍스트)를 모아 Claude로 분석합니다.</div>
+    <textarea id="extraText" placeholder="(선택) 직접 텍스트를 추가로 붙여넣을 수 있습니다. 예: 자기소개, 여행 후기 일부 등." style="margin-top:10px;"></textarea>
+    <div class="row" style="justify-content:flex-end; margin-top: 10px;">
+      <button class="btn G" id="analyzeBtn">AI로 분석하기</button>
+    </div>
+    <div id="analyzeStatus" class="muted" style="margin-top:8px;min-height:16px;"></div>
+    <div id="analyzeErr" class="err"></div>
+  </div>
+
+  <!-- 성향도 카드 (보기/수정) -->
+  <div class="card">
+    <h2>3. 내 여행 성향도</h2>
+    <div id="profileMeta" class="sub" style="margin-bottom:10px;"></div>
+
+    <div class="axes" id="axesEditor">
+      <div class="axis-row"><div class="name">탐험가</div><input type="range" min="0" max="100" id="ax_explorer" /><div class="value" id="val_explorer">50</div></div>
+      <div class="axis-row"><div class="name">감성가</div><input type="range" min="0" max="100" id="ax_aesthetic" /><div class="value" id="val_aesthetic">50</div></div>
+      <div class="axis-row"><div class="name">계획가</div><input type="range" min="0" max="100" id="ax_planner" /><div class="value" id="val_planner">50</div></div>
+      <div class="axis-row"><div class="name">즉흥가</div><input type="range" min="0" max="100" id="ax_spontaneous" /><div class="value" id="val_spontaneous">50</div></div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <label>주 유형</label>
+      <select id="personaType">
+        <option value="explorer">탐험가 (explorer)</option>
+        <option value="aesthetic">감성가 (aesthetic)</option>
+        <option value="planner">계획가 (planner)</option>
+        <option value="spontaneous">즉흥가 (spontaneous)</option>
+      </select>
+    </div>
+
+    <div style="margin-top:14px;">
+      <label>관심 태그 (Enter 또는 ,로 추가)</label>
+      <div class="chips" id="tagsEditor"><input id="tagsInput" type="text" placeholder="예: 감성카페, 트레킹"/></div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <label>추천 여행지 키워드</label>
+      <div class="chips" id="destEditor"><input id="destInput" type="text" placeholder="예: 제주, 교토"/></div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <label>한 줄 요약 (60자 이내)</label>
+      <input id="summaryEdit" type="text" maxlength="200" />
+    </div>
+
+    <div class="row" style="justify-content:flex-end; gap:8px; margin-top: 16px;">
+      <button class="btn btn-sm" id="resetProfileBtn">되돌리기</button>
+      <button class="btn G btn-sm" id="saveProfileBtn">저장</button>
+    </div>
+    <div id="profileErr" class="err"></div>
+  </div>
+</div>
+
+<!-- 직접 텍스트 입력 모달 -->
+<div id="manualModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2 style="margin:0 0 6px;font-size:15px;">텍스트 직접 입력</h2>
+    <div class="muted">URL에서 본문을 가져오지 못했거나 비공개 페이지인 경우, 본인이 작성한 글의 일부(자기소개, 여행 후기 등)를 직접 붙여넣어 주세요.</div>
+    <textarea id="manualText" style="margin-top:10px;min-height:160px;" placeholder="여행 후기, 자기소개, 즐겨찾는 여행 스타일 등을 자유롭게 붙여넣으세요."></textarea>
+    <div class="row" style="justify-content:flex-end; gap:8px; margin-top: 12px;">
+      <button class="btn btn-sm" id="manualCancel">취소</button>
+      <button class="btn G btn-sm" id="manualSave">저장</button>
+    </div>
+    <div id="manualErr" class="err"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const state = { profile: null, lastSaved: null, manualLinkId: null };
+
+  function show(el){ el.classList.remove('hidden'); }
+  function hide(el){ el.classList.add('hidden'); }
+
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtDate(s) { return s ? String(s).replace('T',' ').slice(0,19) : '-'; }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null; try { data = await res.json(); } catch { data = {}; }
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  // ===== Auth bootstrap =====
+  async function bootstrap() {
+    const r = await api('/api/me');
+    if (!r.ok || !r.data?.user) { show($('loginView')); return; }
+    show($('mainView'));
+    await Promise.all([loadLinks(), loadProfile()]);
+  }
+
+  // ===== Links =====
+  function platformBadge(platform) {
+    const map = {
+      instagram: ['purple', 'IG'],
+      blog: ['amber', 'BLOG'],
+      youtube: ['red', 'YT'],
+      threads: ['purple', 'TH'],
+      twitter: ['amber', 'X'],
+      tiktok: ['red', 'TT'],
+      other: ['', 'WEB'],
+    };
+    const [cls, label] = map[platform] || ['', '·'];
+    return `<div class="platform-icon">${label}</div>`;
+  }
+  function statusBadge(status, err) {
+    const map = {
+      fetched: ['green', '가져옴'],
+      manual: ['green', '직접입력'],
+      pending: ['amber', '대기중'],
+      failed: ['red', '실패'],
+      forbidden: ['red', '비공개'],
+    };
+    const [cls, t] = map[status] || ['', status];
+    return `<span class="badge ${cls}">${t}${err?' · '+escapeHtml(err.slice(0,50)):''}</span>`;
+  }
+
+  async function loadLinks() {
+    const r = await api('/api/me/external-links');
+    if (!r.ok) return;
+    const list = $('linksList'); list.innerHTML = '';
+    if (r.data.links.length === 0) {
+      list.innerHTML = '<div class="muted" style="padding:8px 0;">아직 등록된 링크가 없습니다.</div>';
+      return;
+    }
+    for (const l of r.data.links) {
+      const div = document.createElement('div');
+      div.className = 'link-row';
+      div.innerHTML = `
+        ${platformBadge(l.platform)}
+        <div class="info">
+          <div>${l.handle ? '@'+escapeHtml(l.handle)+' · ' : ''}${statusBadge(l.status, l.fetch_error)}
+            ${l.text_length ? `<span class="muted">· ${l.text_length}자 추출</span>` : ''}</div>
+          <div class="url">${escapeHtml(l.url)}</div>
+        </div>
+        <div class="actions">
+          ${l.status==='failed'||l.status==='forbidden'||l.status==='pending'
+            ? `<button class="btn btn-sm" data-refetch="${l.id}">재시도</button>` : ''}
+          <button class="btn btn-sm" data-manual="${l.id}">텍스트 직접</button>
+          <button class="btn btn-sm danger" data-del="${l.id}">삭제</button>
+        </div>
+      `;
+      list.appendChild(div);
+    }
+    list.querySelectorAll('button[data-refetch]').forEach(b => b.addEventListener('click', () => refetchLink(Number(b.dataset.refetch))));
+    list.querySelectorAll('button[data-manual]').forEach(b => b.addEventListener('click', () => openManual(Number(b.dataset.manual))));
+    list.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => deleteLink(Number(b.dataset.del))));
+  }
+
+  $('linkForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('linkErr').textContent = '';
+    const url = $('linkUrl').value.trim(); if (!url) return;
+    $('linkAddBtn').disabled = true; $('linkAddBtn').textContent = '...';
+    try {
+      const r = await api('/api/me/external-links', { method:'POST', body:{ url } });
+      if (!r.ok) { $('linkErr').textContent = r.data?.error || '추가 실패'; return; }
+      $('linkUrl').value = '';
+      await loadLinks();
+      const link = r.data.link;
+      if (link.status === 'failed' || link.status === 'forbidden') {
+        toast('가져오기 실패. "텍스트 직접"을 눌러 본문을 입력하세요.');
+      } else {
+        toast(`가져옴 (${link.text_length}자)`);
+      }
+    } finally {
+      $('linkAddBtn').disabled = false; $('linkAddBtn').textContent = '추가';
+    }
+  });
+
+  async function refetchLink(id) {
+    const r = await api(`/api/me/external-links/${id}/refetch`, { method:'POST' });
+    if (!r.ok) { toast(r.data?.error || '재시도 실패'); return; }
+    await loadLinks();
+    toast(r.data.status === 'fetched' ? '가져오기 성공' : (r.data.message || '가져오기 실패'));
+  }
+
+  function openManual(id) {
+    state.manualLinkId = id;
+    $('manualText').value = ''; $('manualErr').textContent = '';
+    show($('manualModal'));
+  }
+  $('manualCancel').addEventListener('click', () => hide($('manualModal')));
+  $('manualSave').addEventListener('click', async () => {
+    const text = $('manualText').value.trim();
+    if (text.length < 10) { $('manualErr').textContent = '10자 이상 입력하세요.'; return; }
+    const r = await api(`/api/me/external-links/${state.manualLinkId}/manual-text`, { method:'PUT', body:{ text } });
+    if (!r.ok) { $('manualErr').textContent = r.data?.error || '저장 실패'; return; }
+    hide($('manualModal'));
+    await loadLinks();
+    toast('텍스트가 저장되었습니다.');
+  });
+
+  async function deleteLink(id) {
+    if (!confirm('이 링크를 삭제할까요?')) return;
+    const r = await api(`/api/me/external-links/${id}`, { method:'DELETE' });
+    if (!r.ok) { toast(r.data?.error || '삭제 실패'); return; }
+    await loadLinks();
+  }
+
+  // ===== Analyze =====
+  $('analyzeBtn').addEventListener('click', async () => {
+    $('analyzeErr').textContent = ''; $('analyzeStatus').textContent = '분석 중... (보통 5~15초)';
+    $('analyzeBtn').disabled = true;
+    try {
+      const r = await api('/api/me/preference-profile/analyze', {
+        method: 'POST',
+        body: { extraText: $('extraText').value },
+      });
+      if (!r.ok) {
+        $('analyzeErr').textContent = r.data?.error || '분석 실패';
+        $('analyzeStatus').textContent = '';
+        return;
+      }
+      $('analyzeStatus').textContent = `완료 · 토큰 in:${r.data.usage.input_tokens} out:${r.data.usage.output_tokens}`;
+      await loadProfile();
+      toast('AI 분석 완료');
+    } finally {
+      $('analyzeBtn').disabled = false;
+    }
+  });
+
+  // ===== Profile editor =====
+  function bindAxis(id) {
+    const slider = $('ax_'+id), v = $('val_'+id);
+    slider.addEventListener('input', () => { v.textContent = slider.value; });
+  }
+  ['explorer','aesthetic','planner','spontaneous'].forEach(bindAxis);
+
+  function setProfile(p) {
+    state.profile = p;
+    state.lastSaved = JSON.parse(JSON.stringify(p));
+    if (!p) {
+      $('profileMeta').textContent = '아직 분석된 결과가 없습니다. 위에서 AI 분석을 실행하거나 직접 슬라이더를 조정해 저장하세요.';
+      ['explorer','aesthetic','planner','spontaneous'].forEach(k => { $('ax_'+k).value = 50; $('val_'+k).textContent = '50'; });
+      $('personaType').value = 'aesthetic';
+      renderChips('tagsEditor', []); renderChips('destEditor', []);
+      $('summaryEdit').value = '';
+      return;
+    }
+    const sourceLabel = p.source === 'ai' ? 'AI 분석' : p.source === 'mixed' ? 'AI + 직접 수정' : '직접 입력';
+    $('profileMeta').textContent = `${sourceLabel} · 마지막 분석: ${fmtDate(p.lastAnalyzedAt)} · 마지막 수정: ${fmtDate(p.updatedAt)}`;
+    ['explorer','aesthetic','planner','spontaneous'].forEach(k => { $('ax_'+k).value = p.axes[k]; $('val_'+k).textContent = p.axes[k]; });
+    $('personaType').value = p.personaType || 'aesthetic';
+    renderChips('tagsEditor', p.tags || []);
+    renderChips('destEditor', p.destinations || []);
+    $('summaryEdit').value = p.summary || '';
+  }
+
+  async function loadProfile() {
+    const r = await api('/api/me/preference-profile');
+    if (!r.ok) return;
+    setProfile(r.data.profile);
+  }
+
+  function renderChips(containerId, values) {
+    const wrap = $(containerId);
+    const inputId = containerId === 'tagsEditor' ? 'tagsInput' : 'destInput';
+    const input = $(inputId);
+    Array.from(wrap.querySelectorAll('.chip')).forEach(c => c.remove());
+    for (const v of values) {
+      const chip = document.createElement('span'); chip.className = 'chip';
+      chip.innerHTML = `${escapeHtml(v)}<button type="button" aria-label="삭제">×</button>`;
+      chip.querySelector('button').addEventListener('click', () => chip.remove());
+      wrap.insertBefore(chip, input);
+    }
+  }
+  function readChips(containerId) {
+    return Array.from($(containerId).querySelectorAll('.chip'))
+      .map(c => c.firstChild.textContent.trim()).filter(Boolean);
+  }
+  function setupChipInput(inputId, containerId, max) {
+    const input = $(inputId);
+    function add() {
+      const raw = input.value.trim();
+      if (!raw) return;
+      const tokens = raw.split(',').map(s => s.trim()).filter(Boolean);
+      const wrap = $(containerId);
+      const existing = readChips(containerId);
+      for (const t of tokens) {
+        if (existing.length + 1 > max) break;
+        if (existing.includes(t)) continue;
+        const chip = document.createElement('span'); chip.className = 'chip';
+        chip.innerHTML = `${escapeHtml(t)}<button type="button" aria-label="삭제">×</button>`;
+        chip.querySelector('button').addEventListener('click', () => chip.remove());
+        wrap.insertBefore(chip, input);
+        existing.push(t);
+      }
+      input.value = '';
+    }
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(); }
+      if (e.key === 'Backspace' && !input.value) {
+        const chips = $(containerId).querySelectorAll('.chip');
+        if (chips.length) chips[chips.length-1].remove();
+      }
+    });
+    input.addEventListener('blur', add);
+  }
+  setupChipInput('tagsInput', 'tagsEditor', 12);
+  setupChipInput('destInput', 'destEditor', 8);
+
+  $('resetProfileBtn').addEventListener('click', () => {
+    if (!state.lastSaved) return;
+    setProfile(JSON.parse(JSON.stringify(state.lastSaved)));
+    toast('되돌렸습니다.');
+  });
+
+  $('saveProfileBtn').addEventListener('click', async () => {
+    $('profileErr').textContent = '';
+    const body = {
+      axes: {
+        explorer: Number($('ax_explorer').value),
+        aesthetic: Number($('ax_aesthetic').value),
+        planner: Number($('ax_planner').value),
+        spontaneous: Number($('ax_spontaneous').value),
+      },
+      personaType: $('personaType').value,
+      tags: readChips('tagsEditor'),
+      destinations: readChips('destEditor'),
+      summary: $('summaryEdit').value,
+    };
+    const r = await api('/api/me/preference-profile', { method:'PUT', body });
+    if (!r.ok) { $('profileErr').textContent = r.data?.error || '저장 실패'; return; }
+    await loadProfile();
+    toast('저장되었습니다.');
+  });
+
+  bootstrap();
+</script>
+</body>
+</html>
