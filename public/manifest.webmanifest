@@ -1,0 +1,28 @@
+{
+  "name": "TripMate",
+  "short_name": "TripMate",
+  "description": "여행 동행 매칭 PWA",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0d18",
+  "theme_color": "#0b0d18",
+  "orientation": "portrait",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["travel", "social", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

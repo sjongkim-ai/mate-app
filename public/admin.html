@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>관리자 페이지</title>
+<style>
+  :root {
+    --bg:#f4f6fb; --card:#fff; --line:#e5e7eb; --line2:#d1d5db;
+    --primary:#2563eb; --primary-soft:#dbeafe; --danger:#dc2626; --warn:#d97706;
+    --muted:#6b7280; --ink:#111827; --topbar:#0f172a; --sidebar:#1e293b;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", sans-serif; background: var(--bg); color: var(--ink); }
+  .hidden { display:none !important; }
+  button { cursor: pointer; }
+  input, select, textarea, button { font: inherit; }
+  input[type="text"], input[type="password"], input[type="number"], input[type="email"], select, textarea {
+    width:100%; padding:9px 11px; border:1px solid var(--line2); border-radius:8px; background:#fff;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  label { display:block; margin-bottom:6px; font-size: 13px; color:#374151; }
+  .field { margin-bottom: 14px; }
+  .btn { padding:9px 14px; border-radius:8px; border:1px solid transparent; background: var(--primary); color:#fff; }
+  .btn:disabled { opacity:0.6; cursor: default; }
+  .btn-secondary { background:#fff; color:#111827; border-color: var(--line2); }
+  .btn-danger { background: var(--danger); color:#fff; }
+  .btn-warn { background: var(--warn); color:#fff; }
+  .btn-sm { padding:5px 9px; font-size:13px; }
+  .btn-xs { padding:3px 7px; font-size:12px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .grow { flex:1; }
+  .err { color: var(--danger); font-size: 13px; margin-top: 6px; min-height: 16px; }
+  .right { text-align:right; }
+  .muted { color: var(--muted); font-size:12px; }
+
+  /* Login */
+  .login-wrap { min-height: 100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .login-card { width: 100%; max-width: 380px; }
+
+  /* Topbar */
+  .topbar { display:flex; justify-content: space-between; align-items:center; padding:12px 22px; background: var(--topbar); color:#fff; position: sticky; top:0; z-index: 30; }
+  .topbar .brand { font-weight:600; }
+  .topbar .who { font-size:13px; opacity:0.9; }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 50px); }
+  .sidebar { background: var(--sidebar); color: #cbd5e1; padding: 16px 0; }
+  .sidebar nav { display: flex; flex-direction: column; }
+  .sidebar a { padding: 10px 20px; cursor: pointer; color: #cbd5e1; text-decoration: none; font-size: 14px; border-left: 3px solid transparent; }
+  .sidebar a:hover { background: rgba(255,255,255,0.05); color:#fff; }
+  .sidebar a.active { background: rgba(37,99,235,0.18); border-left-color: var(--primary); color: #fff; font-weight: 600; }
+  .sidebar .group-title { padding: 14px 20px 6px; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color:#64748b; }
+  .content { padding: 24px; overflow:auto; }
+
+  /* Card */
+  .card { background: var(--card); border:1px solid var(--line); border-radius:10px; padding: 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  .card + .card { margin-top:14px; }
+  .card-title { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
+  h1 { margin: 0 0 14px; font-size: 22px; }
+  h2 { margin: 0; font-size: 17px; }
+  .stats { display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:16px; }
+  .stat { background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .stat .label { font-size:12px; color: var(--muted); }
+  .stat .value { font-size: 22px; font-weight:600; margin-top:4px; }
+  .stat .sub { font-size:11px; color: var(--muted); margin-top:4px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size:13px; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { background:#f9fafb; font-weight:600; color:#374151; font-size:12px; }
+  td.actions { white-space: nowrap; }
+  tr:hover { background:#fafbfc; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:#eff6ff; color:#1d4ed8; margin: 1px 2px; }
+  .badge.gray { background:#f3f4f6; color:#4b5563; }
+  .badge.green { background:#ecfdf5; color:#047857; }
+  .badge.red { background:#fef2f2; color: var(--danger); }
+  .badge.amber { background:#fffbeb; color: var(--warn); }
+  .badge.blue { background:#eff6ff; color: var(--primary); }
+  .pager { display:flex; gap:6px; justify-content:flex-end; align-items:center; margin-top:12px; }
+  .pager button { padding:4px 10px; border-radius:6px; border:1px solid var(--line2); background:#fff; }
+
+  /* Filter bar */
+  .filterbar { display:flex; gap:8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filterbar input, .filterbar select { width:auto; min-width: 140px; }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset:0; background: rgba(15,23,42,0.55); display:flex; align-items:center; justify-content:center; z-index: 50; padding:16px; }
+  .modal { width:100%; max-width: 520px; background:#fff; border-radius: 12px; padding: 22px; max-height: 90vh; overflow:auto; }
+  .modal.lg { max-width: 720px; }
+
+  /* Password toggle */
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 40px; }
+  .pw-toggle {
+    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+    background: transparent; border: 0; padding: 6px; color:#6b7280; line-height: 0; border-radius: 6px;
+  }
+  .pw-toggle:hover { color:#111827; background:#f3f4f6; }
+
+  /* Checks */
+  .checks { display:flex; flex-wrap: wrap; gap: 8px 14px; }
+  .checks label { display:flex; align-items:center; gap:6px; margin:0; font-size:14px; color:#111827; }
+</style>
+</head>
+<body>
+
+<!-- ============== LOGIN ============== -->
+<section id="loginView" class="login-wrap">
+  <div class="card login-card">
+    <h1>관리자 로그인</h1>
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginUsername">아이디</label>
+        <input id="loginUsername" type="text" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="loginPassword">비밀번호</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn" style="width:100%">로그인</button>
+      <div id="loginError" class="err"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ============== DASHBOARD SHELL ============== -->
+<section id="dashboardView" class="hidden">
+  <div class="topbar">
+    <div class="brand">TripMate · 관리자</div>
+    <div class="row" style="gap:14px;">
+      <div class="who" id="whoami"></div>
+      <button id="openChangePw" class="btn btn-secondary btn-sm">비밀번호 변경</button>
+      <button id="logoutBtn" class="btn btn-secondary btn-sm">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="group-title">개요</div>
+      <nav id="sidenav">
+        <a data-page="dashboard">대시보드</a>
+        <div class="group-title">사용자</div>
+        <a data-page="members">회원 관리</a>
+        <a data-page="reports">신고 처리</a>
+        <div class="group-title">마스터 데이터</div>
+        <a data-page="interests">관심사 태그</a>
+        <a data-page="verification">인증 도메인</a>
+        <a data-page="departments">부서</a>
+        <div class="group-title">관리자</div>
+        <a data-page="admins">Sub-Admin</a>
+      </nav>
+    </aside>
+
+    <main class="content">
+
+      <!-- Page: dashboard -->
+      <div data-section="dashboard">
+        <h1>대시보드</h1>
+        <div class="stats" id="dashStats"></div>
+        <div class="card">
+          <h2>내 정보</h2>
+          <div id="profileBody" style="margin-top:12px;"></div>
+        </div>
+      </div>
+
+      <!-- Page: members -->
+      <div data-section="members" class="hidden">
+        <h1>회원 관리</h1>
+        <div class="card">
+          <div class="filterbar">
+            <input id="memberQ" type="text" placeholder="닉네임/이메일/전화/SNS ID 검색" />
+            <select id="memberStatus">
+              <option value="">전체 상태</option>
+              <option value="active">활성</option>
+              <option value="suspended">정지</option>
+              <option value="deleted">삭제</option>
+            </select>
+            <button class="btn btn-sm" id="memberSearchBtn">검색</button>
+          </div>
+          <div style="overflow:auto;">
+            <table id="memberTable">
+              <thead>
+                <tr>
+                  <th>ID</th><th>닉네임</th><th>SNS</th><th>이메일</th>
+                  <th>전화</th><th>상태</th><th>최근 로그인</th><th>가입</th><th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pager" id="memberPager"></div>
+        </div>
+      </div>
+
+      <!-- Page: reports -->
+      <div data-section="reports" class="hidden">
+        <h1>신고 처리</h1>
+        <div class="card">
+          <div class="filterbar">
+            <select id="reportStatus">
+              <option value="">전체</option>
+              <option value="open" selected>접수</option>
+              <option value="reviewing">검토중</option>
+              <option value="resolved">처리완료</option>
+              <option value="dismissed">기각</option>
+            </select>
+            <button class="btn btn-sm" id="reportSearchBtn">조회</button>
+          </div>
+          <div style="overflow:auto;">
+            <table id="reportTable">
+              <thead>
+                <tr>
+                  <th>ID</th><th>대상</th><th>사유</th><th>신고자</th>
+                  <th>상태</th><th>접수일</th><th>처리일</th><th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pager" id="reportPager"></div>
+        </div>
+      </div>
+
+      <!-- Page: interests -->
+      <div data-section="interests" class="hidden">
+        <h1>관심사 태그</h1>
+        <div class="card">
+          <div class="card-title"><h2>전체 태그</h2><button class="btn btn-sm" id="addInterestBtn">+ 추가</button></div>
+          <div style="overflow:auto;"><table id="interestTable">
+            <thead><tr><th>ID</th><th>이름</th><th>카테고리</th><th>순서</th><th>활성</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Page: verification -->
+      <div data-section="verification" class="hidden">
+        <h1>인증 도메인 (학교 / 회사)</h1>
+        <div class="card">
+          <div class="card-title"><h2>전체 도메인</h2><button class="btn btn-sm" id="addDomainBtn">+ 추가</button></div>
+          <div style="overflow:auto;"><table id="domainTable">
+            <thead><tr><th>ID</th><th>유형</th><th>도메인</th><th>라벨</th><th>활성</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Page: departments -->
+      <div data-section="departments" class="hidden">
+        <h1>부서</h1>
+        <div class="card">
+          <h2>부서 목록</h2>
+          <p class="muted">Sub-Admin 생성 시 사용되는 부서 목록입니다.</p>
+          <div style="overflow:auto;"><table id="deptTable">
+            <thead><tr><th>ID</th><th>이름</th><th>순서</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- Page: admins (sub-admin management) -->
+      <div data-section="admins" class="hidden">
+        <h1>Sub-Admin</h1>
+        <div class="card">
+          <div class="card-title"><h2>Sub-Admin 목록</h2><button id="openCreateSub" class="btn btn-sm">+ Sub-Admin 생성</button></div>
+          <p class="muted">최고관리자만 sub-admin을 생성/수정/삭제할 수 있습니다.</p>
+          <div style="overflow:auto;">
+            <table id="subAdminTable">
+              <thead><tr>
+                <th>아이디</th><th>이름</th><th>부서</th><th>접근 가능 페이지</th>
+                <th>최초 비번 변경</th><th>최근 로그인</th><th></th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</section>
+
+<!-- ============== MODALS ============== -->
+
+<!-- Password change -->
+<div id="pwModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2 id="pwModalTitle">비밀번호 변경</h2>
+    <p id="pwForceMsg" class="muted hidden">최초 로그인입니다. 비밀번호를 변경해야 다른 기능을 사용할 수 있습니다.</p>
+    <form id="pwForm">
+      <div class="field" id="currentPwField">
+        <label for="currentPw">현재 비밀번호</label>
+        <input id="currentPw" type="password" autocomplete="current-password" />
+      </div>
+      <div class="field">
+        <label for="newPw">새 비밀번호 (8자 이상)</label>
+        <input id="newPw" type="password" minlength="8" autocomplete="new-password" required />
+      </div>
+      <div class="field">
+        <label for="newPw2">새 비밀번호 확인</label>
+        <input id="newPw2" type="password" minlength="8" autocomplete="new-password" required />
+      </div>
+      <div class="row" style="justify-content:flex-end; gap:8px;">
+        <button type="button" id="pwCancelBtn" class="btn btn-secondary">취소</button>
+        <button type="submit" class="btn">변경</button>
+      </div>
+      <div id="pwError" class="err"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Sub-admin create/edit -->
+<div id="subModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2 id="subModalTitle">Sub-Admin 생성</h2>
+    <form id="subForm">
+      <div class="field">
+        <label for="subUsername">아이디</label>
+        <input id="subUsername" type="text" required />
+      </div>
+      <div class="field" id="subPasswordField">
+        <label for="subPassword">비밀번호 (8자 이상, 최초 접속 시 변경 강제)</label>
+        <div class="pw-wrap">
+          <input id="subPassword" type="password" autocomplete="new-password" />
+          <button type="button" class="pw-toggle" data-target="subPassword" aria-label="비밀번호 표시/숨김"></button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="subPassword2">비밀번호 확인</label>
+        <div class="pw-wrap">
+          <input id="subPassword2" type="password" autocomplete="new-password" />
+          <button type="button" class="pw-toggle" data-target="subPassword2" aria-label="비밀번호 표시/숨김"></button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="subName">이름</label>
+        <input id="subName" type="text" required />
+      </div>
+      <div class="field">
+        <label for="subDept">부서</label>
+        <select id="subDept"><option value="">선택하세요</option></select>
+      </div>
+      <div class="field">
+        <label>접근 가능 관리 페이지</label>
+        <div id="pagesChecks" class="checks"></div>
+      </div>
+      <div class="row" style="justify-content:flex-end; gap:8px;">
+        <button type="button" id="subCancelBtn" class="btn btn-secondary">취소</button>
+        <button type="submit" class="btn" id="subSubmitBtn">생성</button>
+      </div>
+      <div id="subError" class="err"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Member detail / sanction -->
+<div id="memberModal" class="modal-bg hidden">
+  <div class="modal lg">
+    <div class="card-title"><h2 id="memberModalTitle">회원 상세</h2><button id="memberCloseBtn" class="btn btn-secondary btn-sm">닫기</button></div>
+    <div id="memberDetailBody"></div>
+    <div class="card" style="margin-top:14px;">
+      <h2>제재 처리</h2>
+      <div class="row" style="margin-top:10px;">
+        <input id="sanctionReason" type="text" placeholder="사유 (예: 욕설/광고/사칭)" class="grow"/>
+        <input id="sanctionDays" type="number" min="0" placeholder="기간(일, 0=미설정)" style="max-width:160px"/>
+      </div>
+      <div class="row" style="justify-content:flex-end; gap:8px; margin-top:10px;">
+        <button class="btn btn-warn btn-sm" id="memberSuspendBtn">정지</button>
+        <button class="btn btn-danger btn-sm" id="memberBanBtn">영구정지</button>
+        <button class="btn btn-secondary btn-sm" id="memberUnsuspendBtn">정지 해제</button>
+      </div>
+      <div id="memberActionError" class="err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Report resolve -->
+<div id="reportModal" class="modal-bg hidden">
+  <div class="modal">
+    <div class="card-title"><h2 id="reportModalTitle">신고 처리</h2><button id="reportCloseBtn" class="btn btn-secondary btn-sm">닫기</button></div>
+    <div id="reportDetailBody"></div>
+    <div style="margin-top:14px;">
+      <div class="field">
+        <label for="reportAction">조치</label>
+        <select id="reportAction">
+          <option value="dismiss">기각</option>
+          <option value="reviewing">검토중</option>
+          <option value="warn">경고 발급</option>
+          <option value="suspend">정지</option>
+          <option value="ban">영구정지</option>
+        </select>
+      </div>
+      <div class="field" id="reportDaysField">
+        <label for="reportDays">정지 기간(일)</label>
+        <input id="reportDays" type="number" min="1" value="7" />
+      </div>
+      <div class="field">
+        <label for="reportResolution">처리 메모</label>
+        <textarea id="reportResolution"></textarea>
+      </div>
+      <div class="row" style="justify-content:flex-end; gap:8px;">
+        <button class="btn" id="reportSubmitBtn">처리</button>
+      </div>
+      <div id="reportError" class="err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Interest tag form -->
+<div id="interestModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2 id="interestModalTitle">관심사 태그</h2>
+    <form id="interestForm">
+      <div class="field"><label>이름</label><input id="interestName" type="text" required /></div>
+      <div class="field"><label>카테고리</label><input id="interestCategory" type="text" /></div>
+      <div class="field"><label>순서</label><input id="interestOrder" type="number" value="0" /></div>
+      <div class="field"><label class="row"><input id="interestEnabled" type="checkbox" checked /> 활성</label></div>
+      <div class="row" style="justify-content:flex-end; gap:8px;">
+        <button type="button" id="interestCancelBtn" class="btn btn-secondary">취소</button>
+        <button type="submit" class="btn">저장</button>
+      </div>
+      <div id="interestError" class="err"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Verification domain form -->
+<div id="domainModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2 id="domainModalTitle">인증 도메인</h2>
+    <form id="domainForm">
+      <div class="field"><label>유형</label>
+        <select id="domainType"><option value="school">학교</option><option value="company">회사</option></select>
+      </div>
+      <div class="field"><label>도메인 (예: kakao.com)</label><input id="domainName" type="text" required /></div>
+      <div class="field"><label>라벨 (예: 카카오)</label><input id="domainLabel" type="text" required /></div>
+      <div class="field"><label class="row"><input id="domainEnabled" type="checkbox" checked /> 활성</label></div>
+      <div class="row" style="justify-content:flex-end; gap:8px;">
+        <button type="button" id="domainCancelBtn" class="btn btn-secondary">취소</button>
+        <button type="submit" class="btn">저장</button>
+      </div>
+      <div id="domainError" class="err"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const state = {
+    admin: null,
+    allPages: [],
+    allDepartments: [],
+    editingSubId: null,
+    member: { page: 1, total: 0 },
+    report: { page: 1, total: 0, current: null },
+    editingInterestId: null,
+    editingDomainId: null,
+    activePage: 'dashboard',
+  };
+
+  const EYE_ON = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>';
+  function setPwIcon(btn, visible) { btn.innerHTML = visible ? EYE_OFF : EYE_ON; }
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pw-toggle');
+    if (!btn) return;
+    const input = document.getElementById(btn.dataset.target);
+    if (!input) return;
+    const visible = input.type === 'text';
+    input.type = visible ? 'password' : 'text';
+    setPwIcon(btn, !visible);
+  });
+  document.querySelectorAll('.pw-toggle').forEach((b) => setPwIcon(b, false));
+
+  function show(el) { el.classList.remove('hidden'); }
+  function hide(el) { el.classList.add('hidden'); }
+  function fmtDate(s) { return s ? String(s).replace('T', ' ').replace('Z', '').slice(0, 19) : '-'; }
+  function fmtDateShort(s) { return s ? String(s).slice(0, 10) : '-'; }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null; try { data = await res.json(); } catch { data = {}; }
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  function statusBadge(s) {
+    const cls = s === 'active' ? 'green' : s === 'suspended' ? 'red' : s === 'deleted' ? 'gray' : 'gray';
+    const txt = s === 'active' ? '활성' : s === 'suspended' ? '정지' : s === 'deleted' ? '삭제' : s;
+    return `<span class="badge ${cls}">${txt}</span>`;
+  }
+  function reportStatusBadge(s) {
+    const map = { open:['amber','접수'], reviewing:['blue','검토중'], resolved:['green','처리완료'], dismissed:['gray','기각'] };
+    const [c,t] = map[s] || ['gray', s];
+    return `<span class="badge ${c}">${t}</span>`;
+  }
+
+  // ============== Page nav ==============
+  function setPage(name) {
+    state.activePage = name;
+    document.querySelectorAll('#sidenav a').forEach((a) => {
+      a.classList.toggle('active', a.dataset.page === name);
+    });
+    document.querySelectorAll('main [data-section]').forEach((d) => {
+      d.classList.toggle('hidden', d.dataset.section !== name);
+    });
+    if (name === 'dashboard') loadDashboard();
+    else if (name === 'members') loadMembers();
+    else if (name === 'reports') loadReports();
+    else if (name === 'interests') loadInterests();
+    else if (name === 'verification') loadDomains();
+    else if (name === 'departments') loadDeptList();
+    else if (name === 'admins') loadSubAdmins();
+  }
+  document.querySelectorAll('#sidenav a').forEach((a) => {
+    a.addEventListener('click', () => setPage(a.dataset.page));
+  });
+
+  function applySidebarPermissions() {
+    const a = state.admin;
+    const allowed = a.role === 'supervisor' ? null : new Set(a.accessiblePages || []);
+    const links = document.querySelectorAll('#sidenav a');
+    links.forEach((link) => {
+      if (allowed === null || allowed.has('*') || allowed.has(link.dataset.page) || link.dataset.page === 'dashboard') {
+        show(link);
+      } else {
+        hide(link);
+      }
+    });
+  }
+
+  // ============== Auth ==============
+  function showLastLogoutAlert(prev) {
+    const t = prev?.lastLogoutAt ? fmtDate(prev.lastLogoutAt) : '기록 없음';
+    const ip = prev?.lastLogoutIp || '기록 없음';
+    alert(`최근 로그아웃 정보\n시간: ${t}\nIP: ${ip}`);
+  }
+
+  async function loadMe() {
+    const r = await api('/admin/api/me');
+    if (!r.ok) { state.admin = null; show($('loginView')); hide($('dashboardView')); return; }
+    state.admin = r.data.admin;
+    enterDashboard();
+  }
+
+  function enterDashboard() {
+    hide($('loginView')); show($('dashboardView'));
+    const a = state.admin;
+    $('whoami').textContent = `${a.name || a.username} (${a.role === 'supervisor' ? '최고관리자' : 'Sub-Admin'})`;
+    applySidebarPermissions();
+    setPage('dashboard');
+    loadPages(); loadDepartmentsList();
+    if (a.mustChangePassword) openPwModal(true);
+  }
+
+  $('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('loginError').textContent = '';
+    const r = await api('/admin/api/login', { method: 'POST', body: { username: $('loginUsername').value.trim(), password: $('loginPassword').value } });
+    if (!r.ok) { $('loginError').textContent = r.data?.error || '로그인 실패'; return; }
+    state.admin = r.data.admin;
+    showLastLogoutAlert(r.data.previousLogout);
+    enterDashboard();
+  });
+
+  $('logoutBtn').addEventListener('click', async () => {
+    await api('/admin/api/logout', { method: 'POST' });
+    state.admin = null; show($('loginView')); hide($('dashboardView'));
+    $('loginUsername').value = ''; $('loginPassword').value = '';
+  });
+
+  // ============== Password change ==============
+  function openPwModal(forced) {
+    $('pwError').textContent = '';
+    $('currentPw').value = ''; $('newPw').value = ''; $('newPw2').value = '';
+    if (forced) {
+      $('currentPwField').classList.add('hidden'); $('pwForceMsg').classList.remove('hidden');
+      $('pwCancelBtn').classList.add('hidden'); $('pwModalTitle').textContent = '비밀번호 변경 (필수)';
+    } else {
+      $('currentPwField').classList.remove('hidden'); $('pwForceMsg').classList.add('hidden');
+      $('pwCancelBtn').classList.remove('hidden'); $('pwModalTitle').textContent = '비밀번호 변경';
+    }
+    show($('pwModal'));
+  }
+  $('openChangePw').addEventListener('click', () => openPwModal(false));
+  $('pwCancelBtn').addEventListener('click', () => hide($('pwModal')));
+  $('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('pwError').textContent = '';
+    if ($('newPw').value !== $('newPw2').value) { $('pwError').textContent = '새 비밀번호가 일치하지 않습니다.'; return; }
+    const body = { newPassword: $('newPw').value };
+    if (!state.admin.mustChangePassword) body.currentPassword = $('currentPw').value;
+    const r = await api('/admin/api/change-password', { method: 'POST', body });
+    if (!r.ok) { $('pwError').textContent = r.data?.error || '변경 실패'; return; }
+    hide($('pwModal')); alert('비밀번호가 변경되었습니다.'); await loadMe();
+  });
+
+  // ============== Dashboard ==============
+  async function loadDashboard() {
+    const r = await api('/admin/api/dashboard');
+    if (!r.ok) return;
+    const d = r.data;
+    $('dashStats').innerHTML = `
+      <div class="stat"><div class="label">전체 회원</div><div class="value">${d.users.total ?? 0}</div>
+        <div class="sub">활성 ${d.users.active ?? 0} · 정지 ${d.users.suspended ?? 0} · 삭제 ${d.users.deleted ?? 0}</div></div>
+      <div class="stat"><div class="label">신고</div><div class="value">${d.reports.open_reports ?? 0}</div>
+        <div class="sub">검토중 ${d.reports.reviewing_reports ?? 0} · 처리 ${d.reports.resolved_reports ?? 0}</div></div>
+      <div class="stat"><div class="label">Sub-Admin</div><div class="value">${d.sub_admins ?? 0}</div></div>
+      <div class="stat"><div class="label">트립</div><div class="value">${d.trips ?? 0}</div></div>
+    `;
+    const a = state.admin;
+    $('profileBody').innerHTML = `
+      <table>
+        <tr><th style="width:160px">아이디</th><td>${escapeHtml(a.username)}</td></tr>
+        <tr><th>이름</th><td>${escapeHtml(a.name || '-')}</td></tr>
+        <tr><th>부서</th><td>${escapeHtml(a.department || '-')}</td></tr>
+        <tr><th>역할</th><td>${a.role === 'supervisor' ? '최고관리자' : 'Sub-Admin'}</td></tr>
+        <tr><th>접근 가능 페이지</th><td>${(a.accessiblePages||[]).map(p=>`<span class="badge">${p}</span>`).join('') || '<span class="muted">없음</span>'}</td></tr>
+        <tr><th>최근 로그인</th><td>${fmtDate(a.lastLoginAt)} (${a.lastLoginIp || '-'})</td></tr>
+        <tr><th>최근 로그아웃</th><td>${fmtDate(a.lastLogoutAt)} (${a.lastLogoutIp || '-'})</td></tr>
+      </table>`;
+  }
+
+  // ============== Members ==============
+  async function loadMembers(page) {
+    if (page) state.member.page = page;
+    const q = $('memberQ').value.trim();
+    const status = $('memberStatus').value;
+    const params = new URLSearchParams({ page: state.member.page, limit: 20 });
+    if (q) params.set('q', q);
+    if (status) params.set('status', status);
+    const r = await api('/admin/api/members?' + params.toString());
+    if (!r.ok) return;
+    const tbody = $('memberTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    for (const m of r.data.members) {
+      const tr = document.createElement('tr');
+      const providers = (m.providers || []).map(p => `<span class="badge blue">${p}</span>`).join(' ');
+      tr.innerHTML = `
+        <td>${m.id}</td>
+        <td>${escapeHtml(m.nickname || '-')}</td>
+        <td>${providers || '<span class="muted">-</span>'}</td>
+        <td>${escapeHtml(m.email || '-')}</td>
+        <td>${escapeHtml(m.phone || '-')}</td>
+        <td>${statusBadge(m.status)}</td>
+        <td>${fmtDate(m.last_login_at)}</td>
+        <td>${fmtDateShort(m.created_at)}</td>
+        <td class="actions"><button class="btn btn-secondary btn-xs" data-mid="${m.id}">상세</button></td>`;
+      tbody.appendChild(tr);
+    }
+    tbody.querySelectorAll('button[data-mid]').forEach((b) => b.addEventListener('click', () => openMemberModal(Number(b.dataset.mid))));
+    state.member.total = r.data.total;
+    renderPager('memberPager', state.member, loadMembers);
+  }
+  $('memberSearchBtn').addEventListener('click', () => loadMembers(1));
+  $('memberQ').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadMembers(1); });
+
+  function renderPager(elId, st, loader) {
+    const totalPages = Math.max(1, Math.ceil(st.total / 20));
+    const wrap = $(elId); wrap.innerHTML = '';
+    if (totalPages <= 1) { wrap.innerHTML = `<span class="muted">총 ${st.total}건</span>`; return; }
+    const mk = (label, p, disabled) => {
+      const b = document.createElement('button'); b.textContent = label; b.disabled = disabled;
+      b.addEventListener('click', () => loader(p)); return b;
+    };
+    wrap.appendChild(document.createTextNode(`총 ${st.total}건  ·  `));
+    wrap.appendChild(mk('이전', Math.max(1, st.page - 1), st.page <= 1));
+    const span = document.createElement('span'); span.textContent = ` ${st.page} / ${totalPages} `;
+    wrap.appendChild(span);
+    wrap.appendChild(mk('다음', Math.min(totalPages, st.page + 1), st.page >= totalPages));
+  }
+
+  async function openMemberModal(id) {
+    const r = await api('/admin/api/members/' + id);
+    if (!r.ok) { alert(r.data?.error || '조회 실패'); return; }
+    state.member.current = r.data.member;
+    const m = r.data.member;
+    $('memberModalTitle').textContent = `회원 상세 - ${m.nickname || ('유저 #' + m.id)}`;
+    const idents = r.data.identities.map(i =>
+      `<tr><td><span class="badge blue">${escapeHtml(i.provider)}</span></td><td>${escapeHtml(i.provider_user_id)}</td><td>${escapeHtml(i.email||'-')}</td><td>${fmtDate(i.created_at)}</td></tr>`
+    ).join('') || '<tr><td colspan="4" class="muted">연결된 SNS 계정이 없습니다.</td></tr>';
+    const sancs = r.data.sanctions.map(s =>
+      `<tr><td>${escapeHtml(s.type)}</td><td>${escapeHtml(s.reason)}</td><td>${fmtDate(s.starts_at)}</td><td>${fmtDate(s.ends_at)}</td><td>${s.revoked_at?'해제됨':'유효'}</td></tr>`
+    ).join('') || '<tr><td colspan="5" class="muted">제재 이력 없음</td></tr>';
+    $('memberDetailBody').innerHTML = `
+      <div class="card">
+        <h2>기본 정보</h2>
+        <table style="margin-top:8px;">
+          <tr><th style="width:160px">ID</th><td>${m.id}</td></tr>
+          <tr><th>닉네임</th><td>${escapeHtml(m.nickname||'-')}</td></tr>
+          <tr><th>이메일</th><td>${escapeHtml(m.email||'-')}</td></tr>
+          <tr><th>전화 (인증)</th><td>${escapeHtml(m.phone||'-')} ${m.phone_verified?'<span class="badge green">인증</span>':''}</td></tr>
+          <tr><th>성별 / 연령대</th><td>${escapeHtml(m.gender||'-')} / ${escapeHtml(m.age_range||'-')}</td></tr>
+          <tr><th>MBTI</th><td>${escapeHtml(m.mbti||'-')}</td></tr>
+          <tr><th>거주지</th><td>${escapeHtml(m.residence||'-')}</td></tr>
+          <tr><th>학교 / 직장</th><td>${escapeHtml(m.university||'-')} / ${escapeHtml(m.company||'-')}</td></tr>
+          <tr><th>XP / 레벨</th><td>${m.xp_total} XP · Lv ${m.level}</td></tr>
+          <tr><th>상태</th><td>${statusBadge(m.status)} ${m.suspended_until?'(해제일: '+fmtDate(m.suspended_until)+')':''}</td></tr>
+          <tr><th>가입 / 최근 로그인</th><td>${fmtDate(m.created_at)} / ${fmtDate(m.last_login_at)}</td></tr>
+          <tr><th>한 줄 소개</th><td>${escapeHtml(m.bio||'-')}</td></tr>
+          ${m.suspended_reason?`<tr><th>정지 사유</th><td>${escapeHtml(m.suspended_reason)}</td></tr>`:''}
+        </table>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <h2>연결된 SNS 계정</h2>
+        <table style="margin-top:8px;"><thead><tr><th>제공자</th><th>식별자</th><th>이메일</th><th>연결일</th></tr></thead><tbody>${idents}</tbody></table>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <h2>제재 이력</h2>
+        <table style="margin-top:8px;"><thead><tr><th>유형</th><th>사유</th><th>시작</th><th>종료</th><th>상태</th></tr></thead><tbody>${sancs}</tbody></table>
+      </div>`;
+    $('sanctionReason').value = ''; $('sanctionDays').value = ''; $('memberActionError').textContent = '';
+    show($('memberModal'));
+  }
+  $('memberCloseBtn').addEventListener('click', () => hide($('memberModal')));
+
+  $('memberSuspendBtn').addEventListener('click', async () => {
+    const reason = $('sanctionReason').value.trim();
+    const days = parseInt($('sanctionDays').value, 10) || 0;
+    if (!reason) { $('memberActionError').textContent = '사유를 입력하세요.'; return; }
+    const r = await api(`/admin/api/members/${state.member.current.id}/suspend`, { method: 'POST', body: { reason, days } });
+    if (!r.ok) { $('memberActionError').textContent = r.data?.error || '실패'; return; }
+    hide($('memberModal')); await loadMembers();
+  });
+  $('memberBanBtn').addEventListener('click', async () => {
+    const reason = $('sanctionReason').value.trim();
+    if (!reason) { $('memberActionError').textContent = '사유를 입력하세요.'; return; }
+    if (!confirm('영구정지하시겠습니까?')) return;
+    const r = await api(`/admin/api/members/${state.member.current.id}/ban`, { method: 'POST', body: { reason } });
+    if (!r.ok) { $('memberActionError').textContent = r.data?.error || '실패'; return; }
+    hide($('memberModal')); await loadMembers();
+  });
+  $('memberUnsuspendBtn').addEventListener('click', async () => {
+    if (!confirm('정지를 해제하시겠습니까?')) return;
+    const r = await api(`/admin/api/members/${state.member.current.id}/unsuspend`, { method: 'POST', body: {} });
+    if (!r.ok) { $('memberActionError').textContent = r.data?.error || '실패'; return; }
+    hide($('memberModal')); await loadMembers();
+  });
+
+  // ============== Reports ==============
+  async function loadReports(page) {
+    if (page) state.report.page = page;
+    const status = $('reportStatus').value;
+    const params = new URLSearchParams({ page: state.report.page, limit: 20 });
+    if (status) params.set('status', status);
+    const r = await api('/admin/api/reports?' + params.toString());
+    if (!r.ok) return;
+    const tbody = $('reportTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    for (const rep of r.data.reports) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${rep.id}</td>
+        <td><span class="badge gray">${escapeHtml(rep.target_type)}</span> #${rep.target_id}</td>
+        <td>${escapeHtml(rep.reason)}</td>
+        <td>${escapeHtml(rep.reporter_nickname||'-')} (${rep.reporter_id||'-'})</td>
+        <td>${reportStatusBadge(rep.status)}</td>
+        <td>${fmtDate(rep.created_at)}</td>
+        <td>${fmtDate(rep.resolved_at)}</td>
+        <td class="actions"><button class="btn btn-secondary btn-xs" data-rid="${rep.id}">처리</button></td>`;
+      tbody.appendChild(tr);
+    }
+    tbody.querySelectorAll('button[data-rid]').forEach((b) => b.addEventListener('click', () => openReportModal(Number(b.dataset.rid))));
+    state.report.total = r.data.total;
+    renderPager('reportPager', state.report, loadReports);
+  }
+  $('reportSearchBtn').addEventListener('click', () => loadReports(1));
+
+  async function openReportModal(id) {
+    const r = await api('/admin/api/reports/' + id);
+    if (!r.ok) { alert(r.data?.error || '조회 실패'); return; }
+    state.report.current = r.data.report;
+    const rep = r.data.report;
+    $('reportModalTitle').textContent = `신고 #${rep.id}`;
+    $('reportDetailBody').innerHTML = `
+      <table>
+        <tr><th style="width:140px">대상</th><td><span class="badge gray">${escapeHtml(rep.target_type)}</span> #${rep.target_id}</td></tr>
+        <tr><th>사유</th><td>${escapeHtml(rep.reason)}</td></tr>
+        <tr><th>상세</th><td>${escapeHtml(rep.detail||'-')}</td></tr>
+        <tr><th>신고자</th><td>${escapeHtml(rep.reporter_nickname||'-')} (${rep.reporter_id||'-'})</td></tr>
+        <tr><th>현재 상태</th><td>${reportStatusBadge(rep.status)}</td></tr>
+        <tr><th>접수일</th><td>${fmtDate(rep.created_at)}</td></tr>
+        ${rep.resolution?`<tr><th>처리 메모</th><td>${escapeHtml(rep.resolution)}</td></tr>`:''}
+      </table>`;
+    $('reportAction').value = 'dismiss'; $('reportDays').value = '7'; $('reportResolution').value = ''; $('reportError').textContent = '';
+    show($('reportModal'));
+  }
+  $('reportCloseBtn').addEventListener('click', () => hide($('reportModal')));
+  $('reportAction').addEventListener('change', () => {
+    $('reportDaysField').classList.toggle('hidden', $('reportAction').value !== 'suspend');
+  });
+  $('reportSubmitBtn').addEventListener('click', async () => {
+    const action = $('reportAction').value;
+    const sanctionDays = parseInt($('reportDays').value, 10) || 7;
+    const resolution = $('reportResolution').value.trim();
+    const r = await api(`/admin/api/reports/${state.report.current.id}/resolve`, { method: 'POST', body: { action, sanctionDays, resolution } });
+    if (!r.ok) { $('reportError').textContent = r.data?.error || '실패'; return; }
+    hide($('reportModal')); await loadReports();
+  });
+
+  // ============== Interest tags ==============
+  async function loadInterests() {
+    const r = await api('/admin/api/master/interest-tags');
+    if (!r.ok) return;
+    const tbody = $('interestTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    for (const t of r.data.tags) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${t.id}</td>
+        <td>${escapeHtml(t.name)}</td>
+        <td>${escapeHtml(t.category||'-')}</td>
+        <td>${t.display_order}</td>
+        <td>${t.enabled?'<span class="badge green">활성</span>':'<span class="badge gray">비활성</span>'}</td>
+        <td class="actions">
+          <button class="btn btn-secondary btn-xs" data-iedit='${t.id}'>수정</button>
+          <button class="btn btn-danger btn-xs" data-idel='${t.id}'>삭제</button>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+    tbody.querySelectorAll('button[data-iedit]').forEach((b) => b.addEventListener('click', () => openInterestModal(r.data.tags.find(x => x.id === Number(b.dataset.iedit)))));
+    tbody.querySelectorAll('button[data-idel]').forEach((b) => b.addEventListener('click', () => deleteInterest(Number(b.dataset.idel))));
+  }
+  function openInterestModal(target) {
+    $('interestError').textContent = '';
+    if (target) {
+      state.editingInterestId = target.id;
+      $('interestModalTitle').textContent = `관심사 태그 수정 - ${target.name}`;
+      $('interestName').value = target.name;
+      $('interestCategory').value = target.category || '';
+      $('interestOrder').value = target.display_order;
+      $('interestEnabled').checked = !!target.enabled;
+    } else {
+      state.editingInterestId = null;
+      $('interestModalTitle').textContent = '관심사 태그 추가';
+      $('interestName').value = ''; $('interestCategory').value = ''; $('interestOrder').value = '0'; $('interestEnabled').checked = true;
+    }
+    show($('interestModal'));
+  }
+  $('addInterestBtn').addEventListener('click', () => openInterestModal(null));
+  $('interestCancelBtn').addEventListener('click', () => hide($('interestModal')));
+  $('interestForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('interestError').textContent = '';
+    const body = {
+      name: $('interestName').value.trim(),
+      category: $('interestCategory').value.trim(),
+      displayOrder: parseInt($('interestOrder').value, 10) || 0,
+      enabled: $('interestEnabled').checked,
+    };
+    const r = state.editingInterestId
+      ? await api(`/admin/api/master/interest-tags/${state.editingInterestId}`, { method: 'PUT', body })
+      : await api('/admin/api/master/interest-tags', { method: 'POST', body });
+    if (!r.ok) { $('interestError').textContent = r.data?.error || '실패'; return; }
+    hide($('interestModal')); await loadInterests();
+  });
+  async function deleteInterest(id) {
+    if (!confirm('이 태그를 삭제하시겠습니까?')) return;
+    const r = await api(`/admin/api/master/interest-tags/${id}`, { method: 'DELETE' });
+    if (!r.ok) { alert(r.data?.error || '삭제 실패'); return; }
+    await loadInterests();
+  }
+
+  // ============== Verification domains ==============
+  async function loadDomains() {
+    const r = await api('/admin/api/master/verification-domains');
+    if (!r.ok) return;
+    const tbody = $('domainTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    for (const d of r.data.domains) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${d.id}</td>
+        <td>${d.type === 'school' ? '<span class="badge blue">학교</span>' : '<span class="badge amber">회사</span>'}</td>
+        <td>${escapeHtml(d.domain)}</td>
+        <td>${escapeHtml(d.label)}</td>
+        <td>${d.enabled?'<span class="badge green">활성</span>':'<span class="badge gray">비활성</span>'}</td>
+        <td class="actions">
+          <button class="btn btn-secondary btn-xs" data-dedit='${d.id}'>수정</button>
+          <button class="btn btn-danger btn-xs" data-ddel='${d.id}'>삭제</button>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+    tbody.querySelectorAll('button[data-dedit]').forEach((b) => b.addEventListener('click', () => openDomainModal(r.data.domains.find(x => x.id === Number(b.dataset.dedit)))));
+    tbody.querySelectorAll('button[data-ddel]').forEach((b) => b.addEventListener('click', () => deleteDomain(Number(b.dataset.ddel))));
+  }
+  function openDomainModal(target) {
+    $('domainError').textContent = '';
+    if (target) {
+      state.editingDomainId = target.id;
+      $('domainModalTitle').textContent = `인증 도메인 수정 - ${target.domain}`;
+      $('domainType').value = target.type;
+      $('domainName').value = target.domain;
+      $('domainLabel').value = target.label;
+      $('domainEnabled').checked = !!target.enabled;
+    } else {
+      state.editingDomainId = null;
+      $('domainModalTitle').textContent = '인증 도메인 추가';
+      $('domainType').value = 'school'; $('domainName').value = ''; $('domainLabel').value = ''; $('domainEnabled').checked = true;
+    }
+    show($('domainModal'));
+  }
+  $('addDomainBtn').addEventListener('click', () => openDomainModal(null));
+  $('domainCancelBtn').addEventListener('click', () => hide($('domainModal')));
+  $('domainForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('domainError').textContent = '';
+    const body = {
+      type: $('domainType').value,
+      domain: $('domainName').value.trim(),
+      label: $('domainLabel').value.trim(),
+      enabled: $('domainEnabled').checked,
+    };
+    const r = state.editingDomainId
+      ? await api(`/admin/api/master/verification-domains/${state.editingDomainId}`, { method: 'PUT', body })
+      : await api('/admin/api/master/verification-domains', { method: 'POST', body });
+    if (!r.ok) { $('domainError').textContent = r.data?.error || '실패'; return; }
+    hide($('domainModal')); await loadDomains();
+  });
+  async function deleteDomain(id) {
+    if (!confirm('이 도메인을 삭제하시겠습니까?')) return;
+    const r = await api(`/admin/api/master/verification-domains/${id}`, { method: 'DELETE' });
+    if (!r.ok) { alert(r.data?.error || '삭제 실패'); return; }
+    await loadDomains();
+  }
+
+  // ============== Departments (read-only list) ==============
+  async function loadDeptList() {
+    const r = await api('/admin/api/departments');
+    if (!r.ok) return;
+    const tbody = $('deptTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    for (const d of r.data.departments) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${d.id}</td><td>${escapeHtml(d.name)}</td><td>-</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ============== Sub-Admin (existing) ==============
+  async function loadPages() {
+    if (state.allPages.length > 0) return;
+    const r = await api('/admin/api/pages');
+    if (r.ok) state.allPages = r.data.pages || [];
+  }
+  async function loadDepartmentsList() {
+    if (state.allDepartments.length > 0) return;
+    const r = await api('/admin/api/departments');
+    if (r.ok) state.allDepartments = r.data.departments || [];
+  }
+  function renderDepartmentOptions(selected) {
+    const sel = $('subDept');
+    sel.innerHTML = '<option value="">선택하세요</option>';
+    for (const d of state.allDepartments) {
+      const opt = document.createElement('option'); opt.value = d.name; opt.textContent = d.name;
+      if (d.name === selected) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+  function pagesText(pages) {
+    if (!pages || pages.length === 0) return '<span class="muted">없음</span>';
+    if (pages.includes('*')) return '<span class="badge">전체</span>';
+    return pages.map((p) => `<span class="badge">${p}</span>`).join('');
+  }
+
+  async function loadSubAdmins() {
+    const r = await api('/admin/api/sub-admins');
+    if (!r.ok) return;
+    const tbody = $('subAdminTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    for (const s of r.data.admins) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(s.username)}</td>
+        <td>${escapeHtml(s.name||'-')}</td>
+        <td>${escapeHtml(s.department||'-')}</td>
+        <td>${pagesText(s.accessiblePages)}</td>
+        <td>${s.mustChangePassword?'<span class="badge amber">미완료</span>':'<span class="badge green">완료</span>'}</td>
+        <td>${fmtDate(s.lastLoginAt)}<div class="muted">${escapeHtml(s.lastLoginIp||'')}</div></td>
+        <td class="actions">
+          <button class="btn btn-secondary btn-xs" data-edit="${s.id}">수정</button>
+          <button class="btn btn-danger btn-xs" data-del="${s.id}">삭제</button>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+    tbody.querySelectorAll('button[data-edit]').forEach((b) => b.addEventListener('click', () => openSubModal(r.data.admins.find((x) => x.id === Number(b.dataset.edit)))));
+    tbody.querySelectorAll('button[data-del]').forEach((b) => b.addEventListener('click', () => deleteSub(Number(b.dataset.del))));
+  }
+
+  function renderPageChecks(selected = []) {
+    const wrap = $('pagesChecks'); wrap.innerHTML = '';
+    for (const p of state.allPages) {
+      const id = `pg_${p}`;
+      const checked = selected.includes(p) || selected.includes('*') ? 'checked' : '';
+      wrap.insertAdjacentHTML('beforeend', `<label><input type="checkbox" value="${p}" id="${id}" ${checked}/> ${p}</label>`);
+    }
+  }
+  function getCheckedPages() {
+    return Array.from($('pagesChecks').querySelectorAll('input[type=checkbox]:checked')).map((c) => c.value);
+  }
+  function resetPwToggles() {
+    document.querySelectorAll('#subModal .pw-toggle').forEach((btn) => {
+      const input = document.getElementById(btn.dataset.target);
+      if (input) input.type = 'password';
+      setPwIcon(btn, false);
+    });
+  }
+  function openSubModal(target) {
+    $('subError').textContent = '';
+    $('subPassword').value = ''; $('subPassword2').value = '';
+    resetPwToggles();
+    if (target) {
+      state.editingSubId = target.id;
+      $('subModalTitle').textContent = `Sub-Admin 수정 - ${target.username}`;
+      $('subUsername').value = target.username; $('subUsername').disabled = true;
+      $('subPassword').placeholder = '변경 시에만 입력 (최초접속 비번 변경 강제)';
+      $('subPassword2').placeholder = '변경 시에만 입력';
+      $('subName').value = target.name || '';
+      renderDepartmentOptions(target.department || '');
+      renderPageChecks(target.accessiblePages || []);
+      $('subSubmitBtn').textContent = '수정';
+    } else {
+      state.editingSubId = null;
+      $('subModalTitle').textContent = 'Sub-Admin 생성';
+      $('subUsername').value = ''; $('subUsername').disabled = false;
+      $('subPassword').placeholder = ''; $('subPassword2').placeholder = '';
+      $('subName').value = '';
+      renderDepartmentOptions(''); renderPageChecks([]);
+      $('subSubmitBtn').textContent = '생성';
+    }
+    show($('subModal'));
+  }
+  $('openCreateSub').addEventListener('click', () => openSubModal(null));
+  $('subCancelBtn').addEventListener('click', () => hide($('subModal')));
+  $('subForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); $('subError').textContent = '';
+    const pages = getCheckedPages();
+    const pw = $('subPassword').value; const pw2 = $('subPassword2').value;
+    if (state.editingSubId) {
+      if ((pw || pw2) && pw !== pw2) { alert('비밀번호가 일치하지 않습니다.'); $('subError').textContent = '비밀번호 불일치'; $('subPassword2').focus(); return; }
+      const body = { name: $('subName').value, department: $('subDept').value, accessiblePages: pages };
+      if (pw) body.password = pw;
+      const r = await api(`/admin/api/sub-admins/${state.editingSubId}`, { method: 'PUT', body });
+      if (!r.ok) { $('subError').textContent = r.data?.error || '수정 실패'; return; }
+      hide($('subModal')); await loadSubAdmins();
+    } else {
+      if (pw !== pw2) { alert('비밀번호가 일치하지 않습니다.'); $('subError').textContent = '비밀번호 불일치'; $('subPassword2').focus(); return; }
+      const body = { username: $('subUsername').value.trim(), password: pw, name: $('subName').value, department: $('subDept').value, accessiblePages: pages };
+      const r = await api('/admin/api/sub-admins', { method: 'POST', body });
+      if (!r.ok) { $('subError').textContent = r.data?.error || '생성 실패'; return; }
+      hide($('subModal'));
+      alert(`생성 완료\n아이디: ${body.username}\n비밀번호: ${body.password}\n\n해당 sub-admin은 최초 로그인 시 비밀번호 변경이 강제됩니다.`);
+      await loadSubAdmins();
+    }
+  });
+  async function deleteSub(id) {
+    if (!confirm('이 sub-admin을 삭제하시겠습니까?')) return;
+    const r = await api(`/admin/api/sub-admins/${id}`, { method: 'DELETE' });
+    if (!r.ok) { alert(r.data?.error || '삭제 실패'); return; }
+    await loadSubAdmins();
+  }
+
+  // ============== bootstrap ==============
+  loadMe();
+</script>
+</body>
+</html>

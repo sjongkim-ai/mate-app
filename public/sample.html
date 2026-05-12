@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>mate DB 접속 확인</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; max-width: 640px; margin: 3em auto; padding: 0 1em; }
+    h1 { font-size: 1.4em; margin-bottom: 0.5em; }
+    .card { border: 1px solid #ccc; border-radius: 8px; padding: 1.2em 1.5em; margin-top: 1em; }
+    .ok { color: #0a7d2c; font-weight: 600; }
+    .err { color: #b00020; font-weight: 600; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.5em 1.2em; margin: 0.8em 0 0; }
+    dt { color: #666; }
+    dd { margin: 0; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+    button { margin-top: 1em; padding: 0.5em 1.2em; cursor: pointer; font-size: 1em; }
+    pre { background: rgba(127,127,127,0.12); padding: 0.6em 1em; border-radius: 4px; white-space: pre-wrap; word-break: break-all; }
+    .muted { color: #888; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>mate DB 접속 확인</h1>
+  <div id="status" class="card muted">확인중...</div>
+  <button id="refresh">다시 확인</button>
+
+  <script>
+    const el = document.getElementById('status');
+    async function check() {
+      el.className = 'card muted';
+      el.textContent = '확인중...';
+      try {
+        const r = await fetch('/api/health/db');
+        const j = await r.json();
+        if (j.ok) {
+          el.className = 'card';
+          el.innerHTML = `
+            <div class="ok">연결 성공</div>
+            <dl>
+              <dt>user</dt><dd>${j.user}</dd>
+              <dt>database</dt><dd>${j.db}</dd>
+              <dt>version</dt><dd>${j.version}</dd>
+              <dt>server time</dt><dd>${j.now}</dd>
+            </dl>
+          `;
+        } else {
+          el.className = 'card';
+          el.innerHTML = `<div class="err">연결 실패</div><pre>${j.code || ''} ${j.error}</pre>`;
+        }
+      } catch (e) {
+        el.className = 'card';
+        el.innerHTML = `<div class="err">요청 실패</div><pre>${e.message}</pre>`;
+      }
+    }
+    document.getElementById('refresh').addEventListener('click', check);
+    check();
+  </script>
+</body>
+</html>
