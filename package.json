@@ -4,7 +4,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js",
+    "start": "node index.js",
     "test:db": "node src/test-connection.js",
     "migrate:admins": "node src/migrate-admins.js",
     "migrate:departments": "node src/migrate-departments.js",
@@ -12,7 +12,7 @@
     "seed:master": "node src/seed-master-data.js",
     "migrate:preferences": "node src/migrate-preferences.js",
     "seed:sample-users": "node src/seed-sample-users.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch index.js"
   },
   "keywords": [],
   "author": "",
