@@ -3,146 +3,227 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TripMate - 트립메이트</title>
+  <title>TripMate MVP - 트립메이트</title>
   <style>
     :root {
       --bg: #0b1020;
       --panel: #121a2f;
-      --panel-2: #17213a;
-      --text: #f6f0df;
-      --muted: rgba(246, 240, 223, 0.68);
-      --soft: rgba(246, 240, 223, 0.18);
+      --panel2: #17213a;
+      --panel3: #1d2945;
+      --text: #f8f2df;
+      --muted: rgba(248, 242, 223, 0.68);
+      --soft: rgba(248, 242, 223, 0.16);
+      --line: rgba(248, 242, 223, 0.1);
       --gold: #d7b45d;
-      --coral: #ef6f7f;
       --teal: #35c6a6;
+      --coral: #ef6f7f;
+      --blue: #76a7ff;
+      --ink: #0b1020;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       font-family: Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
       background:
-        radial-gradient(circle at 18% 18%, rgba(53, 198, 166, 0.18), transparent 28%),
-        radial-gradient(circle at 82% 8%, rgba(239, 111, 127, 0.16), transparent 24%),
-        linear-gradient(180deg, #0b1020 0%, #10162a 100%);
+        radial-gradient(circle at 18% 8%, rgba(53, 198, 166, 0.2), transparent 26%),
+        radial-gradient(circle at 82% 10%, rgba(239, 111, 127, 0.18), transparent 24%),
+        linear-gradient(180deg, #0b1020, #10182e);
       color: var(--text);
       display: grid;
       place-items: center;
-      padding: 22px;
+      padding: 18px;
     }
 
-    .phone {
-      width: min(100%, 410px);
-      min-height: min(820px, calc(100vh - 44px));
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(100%, 430px);
+      height: min(860px, calc(100vh - 36px));
+      min-height: 680px;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      background: linear-gradient(180deg, rgba(18, 26, 47, 0.94), rgba(11, 16, 32, 0.98));
-      border-radius: 28px;
+      border-radius: 24px;
+      background: rgba(18, 26, 47, 0.96);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.4);
       overflow: hidden;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
     }
 
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 22px 22px 10px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(11, 16, 32, 0.9);
     }
 
     .brand {
-      font-size: 19px;
-      font-weight: 800;
-      letter-spacing: 0;
+      font-weight: 900;
       color: var(--gold);
+      letter-spacing: 0;
     }
 
-    .pill {
-      border: 1px solid rgba(215, 180, 93, 0.35);
-      color: var(--gold);
-      background: rgba(215, 180, 93, 0.1);
-      padding: 7px 10px;
+    .status {
+      border: 1px solid rgba(53, 198, 166, 0.35);
+      color: var(--teal);
+      background: rgba(53, 198, 166, 0.1);
       border-radius: 999px;
+      padding: 6px 9px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 20px 24px 28px;
-      gap: 24px;
+      overflow: auto;
+      scrollbar-width: none;
+    }
+
+    main::-webkit-scrollbar {
+      display: none;
+    }
+
+    .screen {
+      display: none;
+      min-height: 100%;
+      padding: 20px;
+      animation: enter 160ms ease-out;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
     }
 
     .hero {
       display: grid;
       gap: 18px;
+      align-content: center;
+      min-height: 100%;
+      text-align: center;
     }
 
-    .avatars {
+    .avatar-row {
       display: flex;
-      justify-content: center;
       align-items: center;
-      min-height: 116px;
+      justify-content: center;
+      min-height: 112px;
     }
 
     .avatar {
-      width: 76px;
-      height: 76px;
+      width: 78px;
+      height: 78px;
       border-radius: 50%;
       border: 3px solid var(--bg);
+      background: linear-gradient(145deg, #203f61, #35c6a6);
       display: grid;
       place-items: center;
-      font-size: 34px;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.26);
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
     }
 
-    .avatar:nth-child(1) {
-      background: linear-gradient(145deg, #203f61, #2e7d6a);
-      transform: translateX(14px) scale(0.86);
+    .avatar.small {
+      width: 46px;
+      height: 46px;
+      border-width: 2px;
+      font-size: 16px;
+      flex: 0 0 auto;
     }
 
-    .avatar:nth-child(2) {
-      width: 96px;
-      height: 96px;
-      font-size: 42px;
+    .avatar.mid {
+      width: 98px;
+      height: 98px;
       background: linear-gradient(145deg, #73512a, #d7b45d);
-      border-color: rgba(215, 180, 93, 0.75);
+      border-color: rgba(215, 180, 93, 0.8);
       z-index: 2;
     }
 
-    .avatar:nth-child(3) {
-      background: linear-gradient(145deg, #542c53, #ef6f7f);
+    .avatar.left { transform: translateX(14px) scale(0.86); }
+    .avatar.right {
       transform: translateX(-14px) scale(0.86);
+      background: linear-gradient(145deg, #542c53, #ef6f7f);
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
     }
 
     h1 {
-      margin: 0;
-      font-size: clamp(34px, 10vw, 48px);
-      line-height: 1.05;
+      font-size: 38px;
+      line-height: 1.08;
       letter-spacing: 0;
-      text-align: center;
     }
 
-    .subtitle {
-      margin: 0 auto;
-      max-width: 310px;
+    .hero-title {
+      font-size: clamp(20px, 6.2vw, 26px);
+      line-height: 1.18;
+      white-space: nowrap;
+    }
+
+    h2 {
+      font-size: 24px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .muted {
       color: var(--muted);
-      font-size: 15px;
-      line-height: 1.65;
-      text-align: center;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .between {
+      justify-content: space-between;
+    }
+
+    .card {
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
     .chips {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       gap: 8px;
     }
 
@@ -151,92 +232,697 @@
       background: rgba(255, 255, 255, 0.05);
       border-radius: 999px;
       color: var(--muted);
-      padding: 8px 11px;
+      padding: 7px 10px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
-    .actions {
-      display: grid;
-      gap: 10px;
-      margin-top: 4px;
+    .chip.on {
+      color: var(--ink);
+      background: var(--gold);
+      border-color: var(--gold);
     }
 
-    a,
-    button {
+    .btn {
       width: 100%;
       border: 0;
-      border-radius: 16px;
-      padding: 15px 16px;
-      font: inherit;
-      font-weight: 800;
-      text-decoration: none;
+      border-radius: 8px;
+      padding: 13px 14px;
       text-align: center;
-      cursor: pointer;
-    }
-
-    .primary {
-      color: #15100a;
-      background: linear-gradient(135deg, #f6d995, var(--gold));
-    }
-
-    .secondary {
+      font-weight: 900;
       color: var(--text);
-      background: var(--panel-2);
+      background: var(--panel3);
       border: 1px solid var(--soft);
     }
 
-    .ghost {
-      display: block;
-      color: var(--muted);
-      font-size: 13px;
-      padding: 8px;
+    .btn.primary {
+      color: #15100a;
+      border: 0;
+      background: linear-gradient(135deg, #f6d995, var(--gold));
     }
 
-    footer {
-      padding: 0 24px 24px;
-      color: rgba(246, 240, 223, 0.42);
+    .btn.teal {
+      color: #071410;
+      border: 0;
+      background: var(--teal);
+    }
+
+    .btn.coral {
+      color: #1b070a;
+      border: 0;
+      background: var(--coral);
+    }
+
+    .btn.ghost {
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
       font-size: 12px;
-      text-align: center;
+      font-weight: 800;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--soft);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      padding: 11px 12px;
+      outline: 0;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--gold);
+    }
+
+    .axis {
+      display: grid;
+      grid-template-columns: 112px 1fr 34px;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .value {
+      color: var(--gold);
+      text-align: right;
+    }
+
+    .meter {
+      height: 7px;
+      background: rgba(255, 255, 255, 0.09);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .meter > span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--gold));
+      border-radius: inherit;
+    }
+
+    .match-card {
+      display: grid;
+      gap: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(215, 180, 93, 0.12);
+      color: var(--gold);
+      border: 1px solid rgba(215, 180, 93, 0.32);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .nav {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border-top: 1px solid var(--line);
+      background: rgba(11, 16, 32, 0.94);
+    }
+
+    .nav button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 4px 12px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .nav button.active {
+      color: var(--gold);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      width: min(360px, calc(100% - 36px));
+      transform: translateX(-50%) translateY(16px);
+      opacity: 0;
+      pointer-events: none;
+      background: #f8f2df;
+      color: #15100a;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      transition: 160ms ease;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%);
+    }
+
+    .chat-log {
+      display: grid;
+      gap: 9px;
+      max-height: 280px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .msg {
+      max-width: 82%;
+      border-radius: 8px;
+      padding: 10px 11px;
+      background: var(--panel3);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .msg.me {
+      justify-self: end;
+      color: #15100a;
+      background: var(--gold);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      border: 1px solid var(--soft);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      padding: 9px 6px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .tab.active {
+      color: #15100a;
+      background: var(--gold);
+      border-color: var(--gold);
     }
   </style>
 </head>
 <body>
-  <div class="phone">
+  <div class="app">
     <header>
       <div class="brand">TripMate</div>
-      <div class="pill">MVP</div>
+      <div class="status" id="profile-status">초안</div>
     </header>
 
     <main>
-      <section class="hero" aria-label="TripMate 첫 화면">
-        <div class="avatars" aria-hidden="true">
-          <div class="avatar">🌿</div>
-          <div class="avatar">✈️</div>
-          <div class="avatar">🍜</div>
-        </div>
-
-        <h1>내 여행 취향에 맞는 동행 찾기</h1>
-        <p class="subtitle">
-          AI가 여행 스타일 초안을 만들고, 내가 승인한 프로필로 같은 목적지의 동행을 찾아요.
-        </p>
-
-        <div class="chips" aria-label="핵심 기능">
-          <span class="chip">여행 성향 분석</span>
-          <span class="chip">목적지 매칭</span>
-          <span class="chip">학교/동네 필터</span>
-          <span class="chip">동행 요청 후 채팅</span>
+      <section class="screen active" id="home-screen">
+        <div class="hero">
+          <div class="avatar-row" aria-hidden="true">
+            <div class="avatar left">NA</div>
+            <div class="avatar mid">TM</div>
+            <div class="avatar right">FD</div>
+          </div>
+          <div>
+            <h1 class="hero-title">내 여행 취향에 맞는 동행 찾기</h1>
+            <p class="muted">비공개 AI 분석으로 여행 성향 초안을 만들고, 내가 승인한 프로필만 공개해 목적지와 취향이 맞는 동행을 찾아요.</p>
+          </div>
+          <div class="chips">
+            <span class="chip">비공개 분석</span>
+            <span class="chip">사용자 확정 프로필</span>
+            <span class="chip">목적지 우선 매칭</span>
+            <span class="chip">수락 후 채팅</span>
+          </div>
+          <div class="grid">
+            <button class="btn primary" data-go="onboard-screen">프로필 만들기</button>
+            <button class="btn" data-go="match-screen">동행 후보 둘러보기</button>
+            <button class="btn ghost" data-go="group-screen">그룹 모집 보기</button>
+          </div>
         </div>
       </section>
 
-      <section class="actions" aria-label="시작하기">
-        <button class="primary" type="button">내 여행 동반자 찾기</button>
-        <button class="secondary" type="button">신규 회원 가입</button>
-        <a class="ghost" href="/matches">비회원으로 둘러보기</a>
+      <section class="screen" id="onboard-screen">
+        <div class="section-title">
+          <div>
+            <h2>프로필 설정</h2>
+            <p class="muted">분석 입력은 비공개로 다루고, 사용자가 확정한 프로필만 매칭에 공개됩니다.</p>
+          </div>
+        </div>
+        <div class="grid">
+          <label>
+            닉네임
+            <input id="nickname" value="민 여행자">
+          </label>
+          <label>
+            희망 여행지
+            <select id="destination">
+              <option>일본</option>
+              <option>태국</option>
+              <option>프랑스</option>
+              <option>베트남</option>
+            </select>
+          </label>
+          <label>
+            원하는 동행 조건
+            <select id="condition">
+              <option>성별 무관 1명</option>
+              <option>여성 1명</option>
+              <option>남성 1명</option>
+              <option>그룹 가능</option>
+            </select>
+          </label>
+          <label>
+            SNS 링크 또는 여행 메모
+            <textarea id="analysis-input" placeholder="링크를 붙여넣거나 최근 여행 취향을 적어주세요."></textarea>
+          </label>
+          <button class="btn teal" id="analyze-btn">AI 초안 생성</button>
+          <div class="card" id="analysis-result" hidden>
+            <h3>AI 초안 생성 완료</h3>
+            <p class="muted" id="draft-summary">음식과 현지 문화에 관심이 높은 균형형 여행자로 분석됐어요.</p>
+          </div>
+          <div class="card">
+            <h3>여행 성향 점수</h3>
+            <div class="grid" id="axis-list"></div>
+          </div>
+          <label>
+            공개 프로필 문구
+            <textarea id="profile-text">현지 음식, 걷기 좋은 동네, 차분한 여행 속도를 좋아해요.</textarea>
+          </label>
+          <button class="btn primary" id="confirm-profile">공개 프로필 확정</button>
+        </div>
+      </section>
+
+      <section class="screen" id="match-screen">
+        <div class="section-title">
+          <div>
+            <h2>1:1 동행 매칭</h2>
+            <p class="muted">같은 목적지를 원하는 사람만 보여주고, 학교/동네/현재 위치 필터는 OR 조건으로 적용됩니다.</p>
+          </div>
+        </div>
+        <div class="chips" id="filter-list">
+          <button class="chip on" data-filter="school">같은 학교</button>
+          <button class="chip on" data-filter="neighborhood">근처 동네</button>
+          <button class="chip" data-filter="location">현재 위치 근처</button>
+        </div>
+        <div class="grid" id="matches"></div>
+      </section>
+
+      <section class="screen" id="group-screen">
+        <div class="section-title">
+          <div>
+            <h2>그룹 모집 게시판</h2>
+            <p class="muted">모집글을 좋아요, 저장, 신청할 수 있습니다.</p>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-sort="recommended">추천순</button>
+          <button class="tab" data-sort="deadline">마감임박</button>
+          <button class="tab" data-sort="popular">인기순</button>
+        </div>
+        <div class="grid" id="groups"></div>
+      </section>
+
+      <section class="screen" id="chat-screen">
+        <div class="section-title">
+          <div>
+            <h2>채팅</h2>
+            <p class="muted">동행 요청이 수락된 뒤에만 채팅이 열립니다.</p>
+          </div>
+        </div>
+        <div class="card grid">
+          <div class="row between">
+            <strong id="chat-title">열린 채팅 없음</strong>
+            <span class="badge" id="face-state">얼굴 사진 비공개</span>
+          </div>
+          <div class="chat-log" id="chat-log"></div>
+          <div class="row">
+            <input id="chat-input" placeholder="짧은 메시지를 보내보세요">
+            <button class="btn primary" id="send-chat" style="width: 112px;">전송</button>
+          </div>
+          <div class="row">
+            <button class="btn" id="request-face">얼굴 사진 요청</button>
+            <button class="btn coral" id="revoke-face">공유 회수</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="profile-screen">
+        <div class="section-title">
+          <div>
+            <h2>내 프로필</h2>
+            <p class="muted">인기와 신뢰도는 서로 다른 신호입니다.</p>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="card row">
+            <div class="avatar small">ME</div>
+            <div>
+              <h3 id="profile-name">민 여행자</h3>
+              <p class="muted" id="profile-meta">일본 - 성별 무관 1명</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="row between">
+              <strong>프로필 신뢰도</strong>
+              <span id="reliability-value">72</span>
+            </div>
+            <div class="meter"><span id="reliability-bar" style="width:72%"></span></div>
+          </div>
+          <div class="card">
+            <div class="row between">
+              <strong>인기 배지 진행도</strong>
+              <span>실버 18 / 30</span>
+            </div>
+            <div class="meter"><span style="width:60%"></span></div>
+            <p class="muted" style="margin-top:8px;">인기 배지는 안전, 신뢰도, 궁합 인증이 아닙니다.</p>
+          </div>
+          <div class="card">
+            <h3>확정된 프로필</h3>
+            <p class="muted" id="confirmed-text">프로필을 확정하면 매칭 정보가 공개됩니다.</p>
+          </div>
+        </div>
       </section>
     </main>
 
-    <footer>privacy first · self-expression first</footer>
+    <nav class="nav" aria-label="Main navigation">
+      <button class="active" data-go="home-screen">홈</button>
+      <button data-go="onboard-screen">설정</button>
+      <button data-go="match-screen">매칭</button>
+      <button data-go="group-screen">그룹</button>
+      <button data-go="profile-screen">프로필</button>
+    </nav>
   </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const state = {
+      confirmed: false,
+      activeFilters: new Set(["school", "neighborhood"]),
+      axes: {
+        nature: 68,
+        mood: 72,
+        culture: 76,
+        food: 84,
+        museum: 58,
+        pace: 62
+      },
+      chatOpen: false,
+      chatName: "",
+      faceShared: false,
+      groupSort: "recommended"
+    };
+
+    const axisLabels = {
+        nature: "자연 / 활동",
+        mood: "감성 분위기",
+        culture: "현지 문화",
+        food: "음식 탐험",
+        museum: "박물관 / 전시",
+        pace: "여행 속도"
+    };
+
+    const demoMatches = [
+      { name: "지나", dest: "일본", context: ["school"], similarity: 94, badge: "골드", phrase: "감성 카페 거리와 현지 음식을 좋아해요." },
+      { name: "하루", dest: "일본", context: ["neighborhood"], similarity: 88, badge: "실버", phrase: "천천히 박물관을 보고 라멘과 밤 산책을 즐겨요." },
+      { name: "수", dest: "일본", context: ["location"], similarity: 81, badge: "신규", phrase: "유연한 일정과 사진 명소를 선호해요." }
+    ];
+
+    const groupPosts = [
+      { title: "교토 사진 산책 팀", org: "고려대 사진 동아리", likes: 124, saves: 38, deadline: 2, applied: false },
+      { title: "오사카 맛집 투어 그룹", org: "홍대 근처 여행 모임", likes: 86, saves: 55, deadline: 5, applied: false },
+      { title: "도쿄 뮤지엄 주말 여행", org: "디자인 학교 동문 모임", likes: 48, saves: 21, deadline: 1, applied: false }
+    ];
+
+    function $(selector) {
+      return document.querySelector(selector);
+    }
+
+    function $all(selector) {
+      return Array.from(document.querySelectorAll(selector));
+    }
+
+    function toast(message) {
+      const el = $("#toast");
+      el.textContent = message;
+      el.classList.add("show");
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(() => el.classList.remove("show"), 1800);
+    }
+
+    function contextLabel(context) {
+      return {
+        school: "같은 학교",
+        neighborhood: "근처 동네",
+        location: "현재 위치 근처"
+      }[context] || context;
+    }
+
+    function go(id) {
+      $all(".screen").forEach((screen) => screen.classList.toggle("active", screen.id === id));
+      $all(".nav button").forEach((button) => button.classList.toggle("active", button.dataset.go === id));
+      document.querySelector("main").scrollTop = 0;
+      if (id === "match-screen") renderMatches();
+      if (id === "group-screen") renderGroups();
+      if (id === "profile-screen") renderProfile();
+    }
+
+    function renderAxes() {
+      const list = $("#axis-list");
+      list.innerHTML = Object.entries(state.axes).map(([key, value]) => `
+        <div class="axis">
+          <span>${axisLabels[key]}</span>
+          <input type="range" min="0" max="100" value="${value}" data-axis="${key}">
+          <span class="value" id="axis-${key}">${value}</span>
+        </div>
+      `).join("");
+
+      list.querySelectorAll("input[type='range']").forEach((input) => {
+        input.addEventListener("input", () => {
+          state.axes[input.dataset.axis] = Number(input.value);
+          $("#axis-" + input.dataset.axis).textContent = input.value;
+        });
+      });
+    }
+
+    function analyzeDraft() {
+      const text = $("#analysis-input").value.trim();
+      const boost = Math.min(text.length, 60);
+      state.axes.food = Math.min(100, 72 + Math.round(boost / 4));
+      state.axes.culture = Math.min(100, 68 + Math.round(boost / 5));
+      state.axes.mood = Math.min(100, 64 + Math.round(boost / 6));
+      $("#analysis-result").hidden = false;
+      $("#draft-summary").textContent = text
+        ? "입력한 메모를 바탕으로 현지 문화와 음식 중심 여행자로 분석했어요."
+        : "샘플 초안을 생성했어요. 메모를 추가하면 더 정확해집니다.";
+      renderAxes();
+      toast("AI 초안이 비공개로 생성됐습니다.");
+    }
+
+    function confirmProfile() {
+      state.confirmed = true;
+      $("#profile-status").textContent = "확정됨";
+      $("#profile-status").style.color = "var(--gold)";
+      $("#profile-status").style.borderColor = "rgba(215, 180, 93, 0.42)";
+      renderProfile();
+      toast("공개 프로필이 확정됐습니다. 매칭이 활성화됐어요.");
+      go("match-screen");
+    }
+
+    function renderMatches() {
+      const selected = state.activeFilters;
+      const visible = demoMatches
+        .filter((item) => item.context.some((context) => selected.has(context)) || selected.size === 0)
+        .sort((a, b) => b.similarity - a.similarity);
+
+      $("#matches").innerHTML = visible.map((item, index) => `
+        <article class="card match-card">
+          <div class="row between">
+            <div class="row">
+              <div class="avatar small">${item.name.slice(0, 2).toUpperCase()}</div>
+              <div>
+                <h3>${item.name}</h3>
+                <p class="muted">${item.dest} - ${item.context.map(contextLabel).join(", ")}</p>
+              </div>
+            </div>
+            <span class="badge">${item.badge}</span>
+          </div>
+          <p class="muted">${item.phrase}</p>
+          <div>
+            <div class="row between"><strong>유사도</strong><span>${item.similarity}%</span></div>
+            <div class="meter"><span style="width:${item.similarity}%"></span></div>
+          </div>
+          <button class="btn primary" data-request="${index}">동행 요청 보내기</button>
+        </article>
+      `).join("") || `<div class="card"><p class="muted">선택한 필터에 맞는 후보가 없습니다.</p></div>`;
+
+      $("#matches").querySelectorAll("[data-request]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = visible[Number(button.dataset.request)];
+          state.chatOpen = true;
+          state.chatName = item.name;
+          state.faceShared = false;
+          renderChat();
+          toast(item.name + "님이 데모 요청을 수락했습니다. 채팅이 열렸어요.");
+          go("chat-screen");
+        });
+      });
+    }
+
+    function renderGroups() {
+      const sorted = [...groupPosts].sort((a, b) => {
+        if (state.groupSort === "deadline") return a.deadline - b.deadline;
+        if (state.groupSort === "popular") return b.likes + b.saves - (a.likes + a.saves);
+        return (b.likes * 0.7 + b.saves * 0.5 - b.deadline) - (a.likes * 0.7 + a.saves * 0.5 - a.deadline);
+      });
+
+      $("#groups").innerHTML = sorted.map((post, index) => `
+        <article class="card grid">
+          <div>
+            <h3>${post.title}</h3>
+            <p class="muted">${post.org}</p>
+          </div>
+          <div class="row between">
+            <span class="badge">D-${post.deadline}</span>
+            <span class="muted">좋아요 ${post.likes} - 저장 ${post.saves}</span>
+          </div>
+          <div class="row">
+            <button class="btn" data-like="${index}">좋아요</button>
+            <button class="btn" data-save="${index}">저장</button>
+            <button class="btn primary" data-apply="${index}">${post.applied ? "신청 완료" : "신청"}</button>
+          </div>
+        </article>
+      `).join("");
+
+      $("#groups").querySelectorAll("[data-like]").forEach((button) => {
+        button.addEventListener("click", () => {
+          sorted[Number(button.dataset.like)].likes += 1;
+          toast("모집글에 좋아요를 눌렀습니다.");
+          renderGroups();
+        });
+      });
+      $("#groups").querySelectorAll("[data-save]").forEach((button) => {
+        button.addEventListener("click", () => {
+          sorted[Number(button.dataset.save)].saves += 1;
+          toast("모집글을 저장했습니다.");
+          renderGroups();
+        });
+      });
+      $("#groups").querySelectorAll("[data-apply]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const post = sorted[Number(button.dataset.apply)];
+          post.applied = true;
+          toast(post.org + "에 신청을 보냈습니다.");
+          renderGroups();
+        });
+      });
+    }
+
+    function renderChat() {
+      $("#chat-title").textContent = state.chatOpen ? state.chatName + "님과의 채팅" : "열린 채팅 없음";
+      $("#face-state").textContent = state.faceShared ? "이 채팅에 얼굴 사진 공유됨" : "얼굴 사진 비공개";
+      $("#chat-log").innerHTML = state.chatOpen
+        ? `<div class="msg">요청이 수락됐어요. 예약 전에 여행 속도를 먼저 맞춰봐요.</div>`
+        : `<div class="msg">매칭 화면에서 동행 요청을 보내면 채팅이 열립니다.</div>`;
+    }
+
+    function renderProfile() {
+      const name = $("#nickname").value || "민 여행자";
+      const dest = $("#destination").value;
+      const condition = $("#condition").value;
+      $("#profile-name").textContent = name;
+      $("#profile-meta").textContent = dest + " - " + condition;
+      $("#confirmed-text").textContent = state.confirmed
+        ? $("#profile-text").value
+        : "프로필을 확정하면 매칭 정보가 공개됩니다.";
+      const reliability = state.confirmed ? 86 : 72;
+      $("#reliability-value").textContent = reliability;
+      $("#reliability-bar").style.width = reliability + "%";
+    }
+
+    document.addEventListener("click", (event) => {
+      const goButton = event.target.closest("[data-go]");
+      if (goButton) go(goButton.dataset.go);
+    });
+
+    $("#analyze-btn").addEventListener("click", analyzeDraft);
+    $("#confirm-profile").addEventListener("click", confirmProfile);
+
+    $("#filter-list").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-filter]");
+      if (!button) return;
+      const key = button.dataset.filter;
+      if (state.activeFilters.has(key)) state.activeFilters.delete(key);
+      else state.activeFilters.add(key);
+      button.classList.toggle("on", state.activeFilters.has(key));
+      renderMatches();
+    });
+
+    $all(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        state.groupSort = tab.dataset.sort;
+        $all(".tab").forEach((item) => item.classList.toggle("active", item === tab));
+        renderGroups();
+      });
+    });
+
+    $("#send-chat").addEventListener("click", () => {
+      const input = $("#chat-input");
+      const text = input.value.trim();
+      if (!state.chatOpen) {
+        toast("먼저 동행 요청을 보내 채팅을 열어주세요.");
+        return;
+      }
+      if (!text) return;
+      $("#chat-log").insertAdjacentHTML("beforeend", `<div class="msg me">${text}</div>`);
+      input.value = "";
+      toast("메시지를 보냈습니다.");
+    });
+
+    $("#request-face").addEventListener("click", () => {
+      if (!state.chatOpen) {
+        toast("얼굴 사진 요청은 채팅이 열린 뒤에 가능합니다.");
+        return;
+      }
+      state.faceShared = true;
+      renderChat();
+      toast("데모 승인: 얼굴 사진이 이 채팅에만 공유됐습니다.");
+    });
+
+    $("#revoke-face").addEventListener("click", () => {
+      state.faceShared = false;
+      renderChat();
+      toast("얼굴 사진 접근 권한을 회수했습니다.");
+    });
+
+    renderAxes();
+    renderMatches();
+    renderGroups();
+    renderChat();
+    renderProfile();
+  </script>
 </body>
 </html>
